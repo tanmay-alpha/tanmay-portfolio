@@ -2,30 +2,25 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ---------------------------------------------------------------- *
- *  Dark-only palette. Theme toggle is intentionally removed.
- * ---------------------------------------------------------------- */
 :root {
   color-scheme: dark;
-  --bg: #08090B;
-  --surface: #0E1014;
-  --text-primary: #F5F5F4;
-  --text-secondary: #71717A;
-  --accent: #7DD3FC;
-  --ticker-up: #4ADE80;
-  --ticker-down: #F87171;
-  --ticker-flat: #A3A3A3;
-  --border: rgba(255, 255, 255, 0.06);
+  --bg: #0A0A0A;
+  --surface: #111111;
+  --paper: #FAFAF7;
+  --zinc-100: #F4F4F5;
+  --zinc-300: #D4D4D8;
+  --zinc-400: #A1A1AA;
+  --zinc-500: #71717A;
+  --zinc-700: #3F3F46;
+  --zinc-800: #27272A;
+  --accent: #D97757;
 }
 
-/* ---------------------------------------------------------------- *
- *  Base reset
- * ---------------------------------------------------------------- */
 html,
 body {
   background-color: var(--bg);
-  color: var(--text-primary);
-  font-family: var(--font-inter), system-ui, sans-serif;
+  color: var(--zinc-100);
+  font-family: var(--font-inter-tight), system-ui, sans-serif;
   font-size: 17px;
   line-height: 1.7;
   -webkit-font-smoothing: antialiased;
@@ -33,13 +28,8 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-* {
-  border-color: var(--border);
-}
-
 html {
   scroll-behavior: smooth;
-  /* Lenis controls smooth scroll on desktop; native scroll is fine on touch. */
 }
 
 ::selection {
@@ -47,24 +37,6 @@ html {
   color: var(--bg);
 }
 
-/* ---------------------------------------------------------------- *
- *  Utility: hide native cursor when custom cursor is active
- * ---------------------------------------------------------------- */
-html.has-custom-cursor,
-html.has-custom-cursor * {
-  cursor: none !important;
-}
-
-@media (pointer: coarse) {
-  html.has-custom-cursor,
-  html.has-custom-cursor * {
-    cursor: auto !important;
-  }
-}
-
-/* ---------------------------------------------------------------- *
- *  Utilities
- * ---------------------------------------------------------------- */
 @layer utilities {
   .text-balance {
     text-wrap: balance;
@@ -72,14 +44,14 @@ html.has-custom-cursor * {
   .text-pretty {
     text-wrap: pretty;
   }
-  .glow-green {
-    box-shadow: 0 0 12px rgba(74, 222, 128, 0.5);
+  .grid-12 {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: 1.5rem;
   }
 }
 
-/* ---------------------------------------------------------------- *
- *  Reduced motion: disable smooth scrolling, animations, transitions
- * ---------------------------------------------------------------- */
+/* Reduced motion: kill smooth scroll + framer transitions */
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
