@@ -3,27 +3,19 @@
 @tailwind utilities;
 
 /* ---------------------------------------------------------------- *
- *  Theme tokens — driven by the `dark` class on <html>.
- *  Dark is the default. Variables are duplicated in :root for light.
+ *  Dark-only palette. Theme toggle is intentionally removed.
  * ---------------------------------------------------------------- */
 :root {
-  --bg: #ffffff;
-  --surface: #f5f5f5;
-  --text-primary: #0a0a0a;
-  --text-secondary: #525252;
-  --accent: #0284c7;
-  --border: rgba(10, 10, 10, 0.08);
-  color-scheme: light;
-}
-
-.dark {
-  --bg: #0a0a0a;
-  --surface: #111111;
-  --text-primary: #fafafa;
-  --text-secondary: #a3a3a3;
-  --accent: #7dd3fc;
-  --border: rgba(255, 255, 255, 0.08);
   color-scheme: dark;
+  --bg: #08090B;
+  --surface: #0E1014;
+  --text-primary: #F5F5F4;
+  --text-secondary: #71717A;
+  --accent: #7DD3FC;
+  --ticker-up: #4ADE80;
+  --ticker-down: #F87171;
+  --ticker-flat: #A3A3A3;
+  --border: rgba(255, 255, 255, 0.06);
 }
 
 /* ---------------------------------------------------------------- *
@@ -33,7 +25,12 @@ html,
 body {
   background-color: var(--bg);
   color: var(--text-primary);
-  transition: background-color 200ms ease, color 200ms ease;
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-size: 17px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 * {
@@ -42,20 +39,27 @@ body {
 
 html {
   scroll-behavior: smooth;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  /* Lenis controls smooth scroll on desktop; native scroll is fine on touch. */
 }
 
-body {
-  font-family: var(--font-inter), system-ui, sans-serif;
-  font-size: 17px;
-  line-height: 1.6;
-}
-
-/* Custom selection */
 ::selection {
   background-color: var(--accent);
   color: var(--bg);
+}
+
+/* ---------------------------------------------------------------- *
+ *  Utility: hide native cursor when custom cursor is active
+ * ---------------------------------------------------------------- */
+html.has-custom-cursor,
+html.has-custom-cursor * {
+  cursor: none !important;
+}
+
+@media (pointer: coarse) {
+  html.has-custom-cursor,
+  html.has-custom-cursor * {
+    cursor: auto !important;
+  }
 }
 
 /* ---------------------------------------------------------------- *
@@ -65,14 +69,16 @@ body {
   .text-balance {
     text-wrap: balance;
   }
-
   .text-pretty {
     text-wrap: pretty;
+  }
+  .glow-green {
+    box-shadow: 0 0 12px rgba(74, 222, 128, 0.5);
   }
 }
 
 /* ---------------------------------------------------------------- *
- *  Reduced motion: disable smooth scrolling and theme transitions
+ *  Reduced motion: disable smooth scrolling, animations, transitions
  * ---------------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   html {
@@ -83,5 +89,6 @@ body {
   *::after {
     transition-duration: 0ms !important;
     animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important;
   }
 }

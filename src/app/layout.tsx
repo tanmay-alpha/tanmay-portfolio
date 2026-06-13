@@ -1,7 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono, Instrument_Serif, Noto_Serif_JP } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
+import { Cursor } from "@/components/ui/cursor";
+import { SmoothScroll } from "@/components/ui/smooth-scroll";
+import { Preloader } from "@/components/ui/preloader";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -15,7 +18,22 @@ const jetbrains = JetBrains_Mono({
   display: "swap",
 });
 
-const siteUrl = "https://tanmay-portfolio.vercel.app";
+const instrument = Instrument_Serif({
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
+  variable: "--font-instrument",
+  display: "swap",
+});
+
+const notoJp = Noto_Serif_JP({
+  subsets: ["latin"],
+  weight: ["200", "400"],
+  variable: "--font-noto-jp",
+  display: "swap",
+});
+
+const siteUrl = "https://tanmay-portfolio-coral.vercel.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -66,30 +84,21 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#0A0A0A" },
-    { media: "(prefers-color-scheme: light)", color: "#FFFFFF" },
-  ],
+  themeColor: "#08090B",
+  width: "device-width",
+  initialScale: 1,
 };
 
-// Inline, blocking: resolves the user's preferred theme BEFORE React
-// hydrates so the page never flashes the wrong palette. Reads
-// localStorage("theme") if set, else falls back to OS preference.
-// Default is dark when no signal is available.
-const themeInitScript = `
+// Block any flash of incorrect cursor class. Lenis / preloader handle the rest.
+const cursorInitScript = `
 (function() {
   try {
-    var stored = localStorage.getItem('theme');
-    var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    var theme = stored ? stored : (prefersDark ? 'dark' : 'dark');
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
+    var coarse = window.matchMedia('(pointer: coarse)').matches;
+    var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!coarse && !reduced) {
+      document.documentElement.classList.add('has-custom-cursor');
     }
-  } catch (e) {
-    document.documentElement.classList.add('dark');
-  }
+  } catch (e) {}
 })();
 `;
 
@@ -101,18 +110,18 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${jetbrains.variable} dark`}
+      className={`${inter.variable} ${jetbrains.variable} ${instrument.variable} ${notoJp.variable} dark`}
       suppressHydrationWarning
     >
       <head>
-        <Script
-          id="theme-init"
-          strategy="beforeInteractive"
-        >
-          {themeInitScript}
+        <Script id="cursor-init" strategy="beforeInteractive">
+          {cursorInitScript}
         </Script>
       </head>
-      <body className="min-h-screen bg-bg text-text-primary antialiased">
+      <body className="min-h-screen bg-bg text-text-primary antialiased overflow-x-hidden">
+        <SmoothScroll />
+        <Preloader />
+        <Cursor />
         {children}
       </body>
     </html>
