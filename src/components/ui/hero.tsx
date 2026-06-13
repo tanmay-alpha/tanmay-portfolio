@@ -1,17 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { motion, useMotionValue, useSpring } from "framer-motion";
+import Image from "next/image";
+import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { Github, Linkedin, Mail, FileText } from "lucide-react";
-import { useMediaQuery } from "@/lib/hooks";
 
-const PHILOSOPHY = [
-  "Build to understand.",
-  "Trade to learn.",
-  "Ship to compound.",
-] as const;
-
-const ICON_LINKS = [
+const SOCIAL_LINKS = [
   { label: "GitHub", href: "https://github.com/tanmay-alpha", icon: Github },
   { label: "LinkedIn", href: "https://linkedin.com/in/tanmaymangal", icon: Linkedin },
   { label: "Email", href: "mailto:mangaltanmay7@gmail.com", icon: Mail },
@@ -19,228 +12,103 @@ const ICON_LINKS = [
 ] as const;
 
 export function Hero() {
-  const isReducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
-  const [isBoot, setIsBoot] = useState(true);
-
-  // 3-second extra-bright boot pulse after mount.
-  useEffect(() => {
-    const t = setTimeout(() => setIsBoot(false), 3000);
-    return () => clearTimeout(t);
-  }, []);
+  const reduced = useReducedMotion();
+  const { scrollY } = useScroll();
+  // Subtle parallax: text moves faster than the photo.
+  const textY = useTransform(scrollY, [0, 600], [0, reduced ? 0 : -40]);
+  const photoY = useTransform(scrollY, [0, 600], [0, reduced ? 0 : -16]);
 
   return (
     <section
       id="top"
-      className="relative flex min-h-[100svh] w-full flex-col items-center justify-center px-6 pt-24"
+      className="relative w-full"
+      style={{ minHeight: "calc(100svh - 56px)" }}
     >
-      {/* System online status row */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-        className="mb-8 flex items-center gap-2 font-mono text-[11px] uppercase tracking-widest text-ticker-up"
-      >
-        <motion.span
-          aria-hidden
-          className="inline-block h-1.5 w-1.5 rounded-full bg-ticker-up"
-          animate={
-            isBoot
-              ? {
-                  boxShadow: [
-                    "0 0 0 0 rgba(74,222,128,0.8)",
-                    "0 0 0 12px rgba(74,222,128,0)",
-                    "0 0 0 0 rgba(74,222,128,0)",
-                  ],
-                }
-              : {
-                  boxShadow: [
-                    "0 0 0 0 rgba(74,222,128,0.5)",
-                    "0 0 0 6px rgba(74,222,128,0)",
-                    "0 0 0 0 rgba(74,222,128,0)",
-                  ],
-                }
-          }
-          transition={{
-            duration: isBoot ? 1.2 : 2,
-            repeat: Infinity,
-            ease: "easeOut",
-          }}
-        />
-        system online
-      </motion.div>
+      <div className="mx-auto max-w-container px-6 lg:px-8">
+        {/* Eyebrow row */}
+        <div className="flex h-16 items-center justify-between border-b border-zinc-800">
+          <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+            tanmaymangal.portfolio / 2026
+          </span>
+          <span className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+            <motion.span
+              aria-hidden
+              className="inline-block h-1 w-1 rounded-full bg-zinc-500"
+              animate={
+                reduced
+                  ? { opacity: 0.5 }
+                  : { opacity: [0.3, 1, 0.3] }
+              }
+              transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+            />
+            [ scroll ]
+          </span>
+        </div>
 
-      {/* Name */}
-      <motion.h1
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-        className="text-center font-sans text-display-xl font-extralight text-text-primary text-balance"
-      >
-        Tanmay Mangal
-      </motion.h1>
+        {/* Hero proper */}
+        <motion.div
+          className="grid-12 gap-y-12 py-16 md:py-24 lg:py-32"
+          style={{ y: textY }}
+        >
+          {/* Text block: cols 1-7 */}
+          <div className="col-span-12 md:col-span-7">
+            <span className="block font-mono text-[10px] uppercase tracking-widest text-zinc-400">
+              AI/ML · Full-stack · Quant-adjacent
+            </span>
 
-      {/* Philosophy lines with subtle chromatic aberration on pointer move */}
-      <div className="mt-10 flex flex-col items-center gap-1">
-        {PHILOSOPHY.map((line, i) => (
-          <PhilosophyLine
-            key={line}
-            line={line}
-            delay={0.35 + i * 0.1}
-            disabled={isReducedMotion}
-          />
-        ))}
+            <h1 className="mt-6 font-serif italic text-display-xl font-light text-paper text-balance">
+              Tanmay Mangal
+            </h1>
+
+            <p className="mt-10 max-w-xl font-serif text-2xl italic font-normal leading-snug text-zinc-400 text-pretty md:text-3xl">
+              <span aria-hidden className="mr-2 text-accent">—</span>
+              Build to understand. Trade to learn. Ship to compound.
+            </p>
+
+            <div className="mt-12 flex flex-wrap gap-3">
+              {SOCIAL_LINKS.map((link) => {
+                const Icon = link.icon;
+                return (
+                  <a
+                    key={link.label}
+                    href={link.href}
+                    target={link.href.startsWith("http") ? "_blank" : undefined}
+                    rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}
+                    aria-label={link.label}
+                    className="group flex h-11 w-11 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-400 transition-all duration-200 ease-editorial hover:border-accent hover:text-accent"
+                  >
+                    <Icon className="h-[18px] w-[18px]" />
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Photo: cols 9-12 */}
+          <motion.div
+            className="col-span-12 md:col-span-5 md:col-start-9 flex items-end"
+            style={{ y: photoY }}
+          >
+            <div className="relative w-full max-w-[300px] mx-auto md:mx-0 aspect-[3/4] overflow-hidden md:max-w-none md:w-full">
+              <motion.div
+                className="relative h-full w-full"
+                whileHover={reduced ? undefined : { scale: 1.02 }}
+                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <Image
+                  src="/tanmay.jpg"
+                  alt="Tanmay Mangal — portrait"
+                  width={600}
+                  height={800}
+                  priority
+                  quality={95}
+                  className="h-full w-full object-cover"
+                />
+              </motion.div>
+            </div>
+          </motion.div>
+        </motion.div>
       </div>
-
-      {/* Icon buttons */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.75 }}
-        className="mt-14 flex flex-wrap items-center justify-center gap-3"
-      >
-        {ICON_LINKS.map((link) => (
-          <MagneticIconButton key={link.label} {...link} />
-        ))}
-      </motion.div>
     </section>
-  );
-}
-
-function PhilosophyLine({
-  line,
-  delay,
-  disabled,
-}: {
-  line: string;
-  delay: number;
-  disabled: boolean;
-}) {
-  const ref = useRef<HTMLParagraphElement>(null);
-  // Track pointer velocity globally, then set a CSS variable on this element
-  // for a max 2px text-shadow displacement that decays.
-  const offset = useMotionValue(0);
-  const spring = useSpring(offset, { stiffness: 200, damping: 25 });
-
-  useEffect(() => {
-    if (disabled) return;
-    const el = ref.current;
-    if (!el) return;
-
-    const unsubscribe = spring.on("change", (v) => {
-      // Map v (0..1) to 0..2px. Cap at 2px.
-      const px = Math.min(v, 1) * 2;
-      el.style.setProperty("--ca-x", `${px}px`);
-    });
-
-    let last = { x: 0, y: 0, t: performance.now() };
-    let target = 0;
-    let current = 0;
-
-    const decay = () => {
-      target *= 0.92;
-      if (target < 0.001) target = 0;
-      current += (target - current) * 0.18;
-      offset.set(current);
-      if (target > 0) requestAnimationFrame(decay);
-    };
-
-    const handle = (e: PointerEvent) => {
-      const now = performance.now();
-      const dt = Math.max((now - last.t) / 1000, 0.001);
-      const dx = e.clientX - last.x;
-      const dy = e.clientY - last.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      const v = Math.min((dist / dt) / 4000, 1); // normalize to 0..1
-      if (v > target) target = v;
-      last = { x: e.clientX, y: e.clientY, t: now };
-      offset.set(current + (target - current) * 0.3);
-      requestAnimationFrame(decay);
-    };
-
-    window.addEventListener("pointermove", handle, { passive: true });
-    return () => {
-      window.removeEventListener("pointermove", handle);
-      unsubscribe();
-    };
-  }, [disabled, offset, spring]);
-
-  return (
-    <motion.p
-      ref={ref}
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay }}
-      className="font-mono text-xs uppercase tracking-widest text-text-secondary md:text-sm"
-      style={{
-        textShadow:
-          "calc(var(--ca-x, 0px) * 1) 0 rgba(248,113,113,0.6), calc(var(--ca-x, 0px) * -1) 0 rgba(125,211,252,0.6)",
-        transition: "text-shadow 600ms cubic-bezier(0.16, 1, 0.3, 1)",
-      }}
-    >
-      {line}
-    </motion.p>
-  );
-}
-
-function MagneticIconButton({
-  label,
-  href,
-  icon: Icon,
-}: {
-  label: string;
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-}) {
-  const ref = useRef<HTMLAnchorElement>(null);
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const springX = useSpring(x, { stiffness: 200, damping: 18 });
-  const springY = useSpring(y, { stiffness: 200, damping: 18 });
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const handle = (e: MouseEvent) => {
-      const rect = el.getBoundingClientRect();
-      const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
-      const dx = e.clientX - cx;
-      const dy = e.clientY - cy;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      const radius = 60;
-      if (dist < radius) {
-        const pull = (1 - dist / radius) * 0.35;
-        x.set(dx * pull);
-        y.set(dy * pull);
-      } else {
-        x.set(0);
-        y.set(0);
-      }
-    };
-    const reset = () => {
-      x.set(0);
-      y.set(0);
-    };
-    window.addEventListener("mousemove", handle, { passive: true });
-    el.addEventListener("mouseleave", reset);
-    return () => {
-      window.removeEventListener("mousemove", handle);
-      el.removeEventListener("mouseleave", reset);
-    };
-  }, [x, y]);
-
-  return (
-    <motion.a
-      ref={ref}
-      href={href}
-      target={href.startsWith("http") ? "_blank" : undefined}
-      rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
-      aria-label={label}
-      data-cursor-hover
-      style={{ x: springX, y: springY }}
-      className="group flex h-12 w-12 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] transition-all duration-200 hover:border-accent hover:bg-[rgba(125,211,252,0.08)]"
-    >
-      <Icon className="h-5 w-5 text-text-secondary transition-all duration-200 group-hover:text-accent group-hover:rotate-90" />
-    </motion.a>
   );
 }
