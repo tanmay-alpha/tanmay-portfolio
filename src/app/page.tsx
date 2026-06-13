@@ -1,84 +1,169 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { useEffect } from "react";
+import dynamic from "next/dynamic";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useMediaQuery } from "@/lib/hooks";
 import { Navigation } from "@/components/ui/navigation";
-import { AuroraOrb } from "@/components/ui/aurora-orb";
 import { Hero } from "@/components/ui/hero";
+import { Tape } from "@/components/ui/tape";
+import { Kanji } from "@/components/ui/kanji";
 
-const fadeInUpVariants = {
-  hidden: { y: 16, opacity: 0 },
-  visible: {
-    y: 0,
-    opacity: 1,
-    transition: {
-      duration: 0.5,
-      ease: "easeOut",
-    },
-  },
-};
+// 3D libs (three, drei, postprocessing) are ~300kB on their own.
+// Load the diamond client-side only so it doesn't bloat the initial
+// JS payload. Renders nothing on the server.
+const Hero3D = dynamic(
+  () => import("@/components/ui/hero-3d").then((m) => m.Hero3D),
+  { ssr: false },
+);
 
-const staggerChildren = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
+gsap.registerPlugin(ScrollTrigger);
+
+const SECTIONS: ReadonlyArray<{
+  id: string;
+  num: string;
+  kanji: string;
+  kanjiPosition: "top-right" | "top-left" | "bottom-right" | "bottom-left";
+  header: React.ReactNode;
+  description: string;
+  minHeight: string;
+}> = [
+  {
+    id: "about",
+    num: "001 / about",
+    kanji: "現在",
+    kanjiPosition: "top-right",
+    header: (
+      <>
+        A short note on <em className="italic">who</em> I am.
+      </>
+    ),
+    description: "[ identity — placeholder ]",
+    minHeight: "80vh",
   },
-};
+  {
+    id: "projects",
+    num: "002 / work",
+    kanji: "解析",
+    kanjiPosition: "top-left",
+    header: (
+      <>
+        Things I&apos;ve <em className="italic">built</em>.
+      </>
+    ),
+    description: "[ work — placeholder ]",
+    minHeight: "80vh",
+  },
+  {
+    id: "experience",
+    num: "003 / trail",
+    kanji: "交信",
+    kanjiPosition: "bottom-right",
+    header: (
+      <>
+        Where I&apos;ve <em className="italic">been</em>.
+      </>
+    ),
+    description: "[ trail — placeholder ]",
+    minHeight: "80vh",
+  },
+  {
+    id: "contact",
+    num: "004 / talk",
+    kanji: "接触",
+    kanjiPosition: "bottom-left",
+    header: (
+      <>
+        Let&apos;s <em className="italic">talk</em>.
+      </>
+    ),
+    description: "[ talk — placeholder ]",
+    minHeight: "60vh",
+  },
+];
 
 export default function Home() {
-  const [isMounted, setIsMounted] = useState(false);
+  const isReducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
 
-  // Ensure the UI doesn't mismatch the server-side theme
+  // GSAP ScrollTrigger setup — scroll-linked animations for the hero and
+  // section headers. Registered once at mount.
   useEffect(() => {
-    setIsMounted(true);
-  }, []);
+    if (isReducedMotion) return;
+    const ctx = gsap.context(() => {
+      // Hero: fade out as we scroll past.
+      gsap.to("#top", {
+        opacity: 0,
+        y: -40,
+        ease: "none",
+        scrollTrigger: {
+          trigger: "#top",
+          start: "top top",
+          end: "bottom top",
+          scrub: true,
+        },
+      });
 
-  if (!isMounted) {
-    return null; // No render until client-side hydration
-  }
+      // Section headers: clip-path reveal on enter.
+      const headers = gsap.utils.toArray<HTMLElement>("[data-reveal-header]");
+      headers.forEach((el) => {
+        gsap.fromTo(
+          el,
+          { clipPath: "inset(0 100% 0 0)", opacity: 0 },
+          {
+            clipPath: "inset(0 0% 0 0)",
+            opacity: 1,
+            duration: 1.1,
+            ease: "power4.out",
+            scrollTrigger: {
+              trigger: el,
+              start: "top 80%",
+              toggleActions: "play none none reverse",
+            },
+          },
+        );
+      });
+    });
+    return () => ctx.revert();
+  }, [isReducedMotion]);
 
   return (
-    <main className="min-h-screen relative overflow-hidden">
-      <div className="relative z-10">
-        {/* Header with nav */}
-        <header className="fixed top-0 left-0 right-0 z-50">
-          <Navigation />
-        </header>
+    <main className="relative min-h-screen overflow-x-hidden">
+      <Navigation />
 
-        {/* Hero section */}
-        <section id="top" className="min-h-screen flex items-center justify-center pt-20">
-          <div className="relative">
-            <AuroraOrb />
-            <motion.div
-              className="container mx-auto px-4"
-              variants={staggerChildren}
-              initial="hidden"
-              animate="visible"
-            >
-              <motion.div variants={fadeInUpVariants}>
-                <Hero />
-              </motion.div>
-            </motion.div>
-          </div>
-        </section>
-
-        {/* Empty section placeholders */}
-        <section id="projects" className="min-h-[60vh] py-20">
-          <div className="h-px" />
-        </section>
-
-        <section id="experience" className="min-h-[60vh] py-20">
-          <div className="h-px" />
-        </section>
-
-        <section id="contact" className="min-h-[60vh] py-20">
-          <div className="h-px" />
-        </section>
+      {/* HERO: tape background + 3D diamond + content layered on top */}
+      <div className="relative">
+        <Tape />
+        <Hero3D />
+        <Hero />
       </div>
+
+      {/* MAGAZINE SECTIONS */}
+      {SECTIONS.map((section) => (
+        <section
+          key={section.id}
+          id={section.id}
+          className="relative flex min-h-[80vh] w-full flex-col items-center justify-center px-6 py-24"
+          style={{ minHeight: section.minHeight }}
+        >
+          <Kanji
+            character={section.kanji}
+            position={section.kanjiPosition}
+            size={320}
+            opacity={0.05}
+            weight={200}
+          />
+          <h2
+            data-reveal-header
+            className="relative z-10 max-w-3xl text-center font-serif text-serif-h2 italic text-text-primary text-balance"
+          >
+            {section.header}
+          </h2>
+          <p className="relative z-10 mt-6 font-mono text-xs uppercase tracking-widest text-text-secondary">
+            {section.num} — {section.description}
+          </p>
+        </section>
+      ))}
     </main>
   );
 }
