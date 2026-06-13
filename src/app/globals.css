@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------------------------------------------------------------- *
+ *  Theme tokens — driven by the `dark` class on <html>.
+ *  Dark is the default. Variables are duplicated in :root for light.
+ * ---------------------------------------------------------------- */
+:root {
+  --bg: #ffffff;
+  --surface: #f5f5f5;
+  --text-primary: #0a0a0a;
+  --text-secondary: #525252;
+  --accent: #0284c7;
+  --border: rgba(10, 10, 10, 0.08);
+  color-scheme: light;
+}
+
+.dark {
+  --bg: #0a0a0a;
+  --surface: #111111;
+  --text-primary: #fafafa;
+  --text-secondary: #a3a3a3;
+  --accent: #7dd3fc;
+  --border: rgba(255, 255, 255, 0.08);
+  color-scheme: dark;
+}
+
+/* ---------------------------------------------------------------- *
+ *  Base reset
+ * ---------------------------------------------------------------- */
+html,
+body {
+  background-color: var(--bg);
+  color: var(--text-primary);
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+* {
+  border-color: var(--border);
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+/* Custom selection */
+::selection {
+  background-color: var(--accent);
+  color: var(--bg);
+}
+
+/* ---------------------------------------------------------------- *
+ *  Utilities
+ * ---------------------------------------------------------------- */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .text-pretty {
+    text-wrap: pretty;
+  }
+}
+
+/* ---------------------------------------------------------------- *
+ *  Reduced motion: disable smooth scrolling and theme transitions
+ * ---------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
+}
