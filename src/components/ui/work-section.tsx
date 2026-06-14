@@ -1,7 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { useEffect, useRef } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 
 type Project = {
   name: string;
@@ -41,32 +40,10 @@ const PROJECTS: ReadonlyArray<Project> = [
 ];
 
 export function WorkSection() {
-  const sectionRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    const root = sectionRef.current;
-    if (!root) return;
-    const targets = Array.from(root.querySelectorAll<HTMLElement>("[data-reveal]"));
-    targets.forEach((el) => el.classList.add("reveal"));
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("is-visible");
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.1, rootMargin: "0px 0px -40px 0px" },
-    );
-    targets.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, []);
+  const reduced = useReducedMotion();
 
   return (
     <section
-      ref={sectionRef}
       id="work"
       className="relative w-full border-t border-border py-24 md:py-32 lg:py-40"
     >
@@ -81,10 +58,10 @@ export function WorkSection() {
 
           <div className="col-span-12 md:col-span-10">
             <motion.h2
-              initial={{ opacity: 0, y: 12 }}
+              initial={reduced ? false : { opacity: 0, y: 12 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.4 }}
-              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              viewport={{ once: true, amount: 0.4, margin: "0px 0px -40px 0px" }}
+              transition={reduced ? { duration: 0 } : { duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
               className="section-heading"
             >
               Things I&apos;ve built.
@@ -92,12 +69,31 @@ export function WorkSection() {
           </div>
         </div>
 
-        <div>
+        <motion.div
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.1, margin: "0px 0px -40px 0px" }}
+          variants={{
+            hidden: {},
+            show: {
+              transition: reduced
+                ? { staggerChildren: 0 }
+                : { staggerChildren: 0.12, delayChildren: 0.1 },
+            },
+          }}
+        >
           {PROJECTS.map((project) => (
-            <article
+            <motion.article
               key={project.name}
-              data-reveal
               className="project-row"
+              variants={{
+                hidden: reduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 18 },
+                show: {
+                  opacity: 1,
+                  y: 0,
+                  transition: { duration: 0.55, ease: [0.16, 1, 0.3, 1] as const },
+                },
+              }}
             >
               <div className="grid grid-cols-1 items-baseline gap-2 md:grid-cols-12 md:gap-8">
                 <h3 className="project-name md:col-span-3">
@@ -138,9 +134,9 @@ export function WorkSection() {
                   </span>
                 ))}
               </div>
-            </article>
+            </motion.article>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

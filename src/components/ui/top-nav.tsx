@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const NAV_ITEMS = [
   { id: "top", label: "Home" },
@@ -94,14 +95,16 @@ export function TopNav() {
           ))}
         </ul>
 
-        {/* Mobile menu button */}
-        <button
-          type="button"
-          aria-label={mobileOpen ? "Close menu" : "Open menu"}
-          aria-expanded={mobileOpen}
-          onClick={() => setMobileOpen((o) => !o)}
-          className="flex h-10 w-10 items-center justify-center text-text-2 md:hidden"
-        >
+        {/* Theme toggle + mobile menu button */}
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <button
+            type="button"
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileOpen}
+            onClick={() => setMobileOpen((o) => !o)}
+            className="flex h-10 w-10 items-center justify-center text-text-2 md:hidden"
+          >
           {mobileOpen ? (
             <svg
               viewBox="0 0 24 24"
@@ -127,7 +130,8 @@ export function TopNav() {
               <path d="M4 7h16M4 12h16M4 17h16" />
             </svg>
           )}
-        </button>
+          </button>
+        </div>
       </div>
 
       {/* Mobile menu sheet */}
@@ -146,24 +150,27 @@ export function TopNav() {
             >
               [T.]
             </a>
-            <button
-              type="button"
-              aria-label="Close menu"
-              onClick={() => setMobileOpen(false)}
-              className="flex h-10 w-10 items-center justify-center text-text-2"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                className="h-6 w-6"
-                aria-hidden
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <button
+                type="button"
+                aria-label="Close menu"
+                onClick={() => setMobileOpen(false)}
+                className="flex h-10 w-10 items-center justify-center text-text-2"
               >
-                <path d="M18 6L6 18M6 6l12 12" />
-              </svg>
-            </button>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  className="h-6 w-6"
+                  aria-hidden
+                >
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           </div>
           <ul className="flex flex-1 flex-col items-center justify-center gap-8">
             {NAV_ITEMS.map((item) => (
