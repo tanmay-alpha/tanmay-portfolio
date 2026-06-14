@@ -146,7 +146,17 @@ export function ContactSection() {
           <div className="col-span-12 md:col-span-7">
             <form onSubmit={handleSubmit} className="space-y-6" noValidate>
               {/* Honeypot — hidden from humans, visible to dumb bots. */}
-              <div className="absolute -left-[9999px] h-0 w-0 overflow-hidden" aria-hidden>
+              <div
+                aria-hidden="true"
+                style={{
+                  position: "absolute",
+                  left: -9999,
+                  top: "auto",
+                  width: 1,
+                  height: 1,
+                  overflow: "hidden",
+                }}
+              >
                 <label htmlFor="website-hp">Website</label>
                 <input
                   id="website-hp"
@@ -200,6 +210,9 @@ export function ContactSection() {
                   </a>
                 )}
               </div>
+              <p className="font-sans text-xs text-zinc-500">
+                I get an email at mangaltanmay7@gmail.com when you send. I usually reply within 24 hours.
+              </p>
             </form>
           </div>
         </div>
