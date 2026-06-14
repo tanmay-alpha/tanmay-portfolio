@@ -1,16 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
-import { Fraunces, Inter_Tight, JetBrains_Mono } from "next/font/google";
+import { Inter_Tight, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import { KonamiPanel } from "@/components/ui/konami-panel";
-import { DockNav } from "@/components/ui/dock-nav";
-
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  variable: "--font-fraunces",
-  display: "swap",
-  axes: ["opsz", "SOFT"],
-});
+import { TopNav } from "@/components/ui/top-nav";
 
 const interTight = Inter_Tight({
   subsets: ["latin"],
@@ -29,18 +21,19 @@ const siteUrl = "https://tanmay-portfolio-coral.vercel.app";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Tanmay Mangal — AI/ML Engineer & Full-Stack Developer",
+    default: "Tanmay Mangal",
     template: "%s — Tanmay Mangal",
   },
   description:
-    "AI/ML engineer building MAET (real-time NSE trading terminal), Lumint (AI fraud platform), and FinCalc India. VIT Bhopal '28. Open to AI/ML and full-stack roles.",
+    "Tanmay Mangal — 2nd-year CSE student at VIT Bhopal. Building at the intersection of ML, financial systems, and full-stack engineering.",
   keywords: [
     "Tanmay Mangal",
-    "AI/ML Engineer",
-    "Full-Stack Developer",
-    "Quant",
-    "NSE",
     "VIT Bhopal",
+    "Quant ML",
+    "Full-Stack",
+    "MAET",
+    "Lumint",
+    "FinCalc India",
     "Portfolio",
   ],
   authors: [{ name: "Tanmay Mangal", url: siteUrl }],
@@ -50,23 +43,23 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: siteUrl,
     siteName: "Tanmay Mangal",
-    title: "Tanmay Mangal — AI/ML Engineer & Full-Stack Developer",
+    title: "Tanmay Mangal",
     description:
-      "AI/ML engineer building MAET (real-time NSE trading terminal), Lumint (AI fraud platform), and FinCalc India. VIT Bhopal '28. Open to AI/ML and full-stack roles.",
+      "Tanmay Mangal — 2nd-year CSE student at VIT Bhopal. Building at the intersection of ML, financial systems, and full-stack engineering.",
     images: [
       {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "Tanmay Mangal — AI/ML Engineer",
+        alt: "Tanmay Mangal",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Tanmay Mangal — AI/ML Engineer & Full-Stack Developer",
+    title: "Tanmay Mangal",
     description:
-      "AI/ML engineer building MAET (real-time NSE trading terminal), Lumint (AI fraud platform), and FinCalc India. VIT Bhopal '28. Open to AI/ML and full-stack roles.",
+      "Tanmay Mangal — 2nd-year CSE student at VIT Bhopal. Building at the intersection of ML, financial systems, and full-stack engineering.",
     images: ["/opengraph-image"],
     creator: "@tanmay_alpha",
   },
@@ -77,7 +70,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0A0A0A",
+  themeColor: "#07080E",
   width: "device-width",
   initialScale: 1,
 };
@@ -94,14 +87,13 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${fraunces.variable} ${interTight.variable} ${jetbrains.variable}`}
+      className={`${interTight.variable} ${jetbrains.variable}`}
       suppressHydrationWarning
     >
-      <body className="min-h-screen bg-bg text-zinc-100 antialiased overflow-x-hidden">
+      <body className="min-h-screen bg-bg text-text-1 antialiased overflow-x-hidden">
         <a href="#top" className="skip-link">Skip to content</a>
+        <TopNav />
         {children}
-        <KonamiPanel />
-        <DockNav />
         {plausibleDomain && (
           <Script
             defer

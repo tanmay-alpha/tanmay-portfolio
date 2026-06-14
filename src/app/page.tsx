@@ -1,5 +1,6 @@
 import { Hero } from "@/components/ui/hero";
 import { AboutSection } from "@/components/ui/about-section";
+import { NowSection } from "@/components/ui/now-section";
 import { WorkSection } from "@/components/ui/work-section";
 import { MoreWorkSection } from "@/components/ui/more-work-section";
 import { ExperienceSection } from "@/components/ui/experience-section";
@@ -13,6 +14,7 @@ export default function Home() {
     <main className="relative">
       <Hero />
       <AboutSection />
+      <NowSection />
       <MidPageRail>
         <WorkSection />
         <MoreWorkSection />
