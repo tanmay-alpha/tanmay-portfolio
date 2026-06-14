@@ -51,9 +51,6 @@ export function WorkSection() {
         <div className="grid-12 mb-12 gap-y-8 md:mb-16">
           <div className="col-span-12 md:col-span-2 flex flex-col gap-3">
             <span className="eyebrow">Work</span>
-            <p className="max-w-[180px] text-[12px] leading-[1.55] text-text-3">
-              Work in progress — none of these are finished.
-            </p>
           </div>
 
           <div className="col-span-12 md:col-span-10">

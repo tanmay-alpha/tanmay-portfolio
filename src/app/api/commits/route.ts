@@ -10,6 +10,8 @@ const REPOS_URL = `https://api.github.com/users/${GITHUB_USER}/repos?per_page=10
 // 5 min for events, 1 hr for stats. The route never 500s — it returns a
 // { fallback: true, ... } payload on failure so the UI degrades quietly.
 const REVALIDATE_EVENTS = 300;
+const REVALIDATE_REPOS = 600;
+const REVALIDATE_COMMITS = 300;
 const REVALIDATE_STATS = 3600;
 
 const GH_HEADERS: HeadersInit = {
@@ -116,6 +118,10 @@ export type CommitsResponse = {
   fetchedAt: string;
   cached: boolean;
   fallback?: boolean;
+  /** Why the feed is showing fallback UI. */
+  reason?: "rate_limited" | "error" | "empty";
+  /** When GitHub's rate limit resets, as a Unix timestamp (seconds). */
+  resetAt?: number;
   error?: string;
 };
 
@@ -134,52 +140,156 @@ export async function GET(req: NextRequest) {
 }
 
 async function getCommits() {
-  const res = await safeFetch(
+  const fetchedAt = new Date().toISOString();
+
+  // 1) Try the events feed first — it's cheap and gives us multiple
+  //    commits per push.
+  const eventsRes = await safeFetch(
     EVENTS_URL,
     { headers: GH_HEADERS, next: { revalidate: REVALIDATE_EVENTS } },
     6000,
   );
 
-  const fetchedAt = new Date().toISOString();
-
-  if (!res.ok) {
+  // Rate-limited: surface that to the UI with a reset time.
+  if (!eventsRes.ok && eventsRes.status === 403) {
     return NextResponse.json<CommitsResponse>(
       {
         commits: [],
         fetchedAt,
         cached: false,
         fallback: true,
-        error: res.status === 403 ? "rate-limited" : `http_${res.status}`,
+        reason: "rate_limited",
+        error: "rate-limited",
+      },
+      {
+        status: 200,
+        headers: {
+          "Cache-Control": `public, s-maxage=60, stale-while-revalidate=30`,
+        },
+      },
+    );
+  }
+
+  if (eventsRes.ok) {
+    const events =
+      (eventsRes.data as Array<{
+        type: string;
+        created_at: string;
+        repo: { name: string };
+        payload: unknown;
+      }>) ?? [];
+
+    const pushEvents = events.filter((e) => e && e.type === "PushEvent");
+
+    // Newest first: events are newest-first, but commits inside a push
+    // are oldest-first. Reverse each, then global-sort by timestamp.
+    const fromEvents: Commit[] = pushEvents
+      .flatMap((e) => mapPushEvent(e).reverse())
+      .sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1));
+
+    if (fromEvents.length > 0) {
+      return NextResponse.json<CommitsResponse>(
+        { commits: fromEvents.slice(0, 10), fetchedAt, cached: false },
+        {
+          status: 200,
+          headers: {
+            "Cache-Control": `public, s-maxage=${REVALIDATE_EVENTS}, stale-while-revalidate=60`,
+          },
+        },
+      );
+    }
+
+    // Events endpoint returned OK but with no push events. This is the
+    // "haven't pushed in 90 days" case. Fall through to per-repo fetch.
+  }
+
+  // 2) Fall back to the most recent commit per public repo. This catches
+  //    accounts with no recent activity in the events window but with
+  //    recent commits in their repos.
+  const reposRes = await safeFetch(
+    REPOS_URL,
+    { headers: GH_HEADERS, next: { revalidate: REVALIDATE_REPOS } },
+    6000,
+  );
+
+  if (reposRes.ok) {
+    const repos =
+      (reposRes.data as Array<{ name: string; fork?: boolean }>) ?? [];
+    const ownRepos = repos
+      .filter((r) => r && r.name && !r.fork)
+      .slice(0, 8); // cap fan-out — we only need 10 commits total
+
+    // Fetch latest commit for each repo in parallel.
+    const perRepo = await Promise.all(
+      ownRepos.map((r) =>
+        safeFetch(
+          `https://api.github.com/repos/${GITHUB_USER}/${r.name}/commits?per_page=1`,
+          { headers: GH_HEADERS, next: { revalidate: REVALIDATE_COMMITS } },
+          4000,
+        ).then((res) => {
+          if (!res.ok) return null;
+          const arr = res.data as Array<{
+            sha: string;
+            html_url: string;
+            commit: { message: string; author: { name: string; email: string; date: string } };
+          }>;
+          const c = arr?.[0];
+          if (!c) return null;
+          return {
+            id: c.sha,
+            repo: r.name,
+            message: (c.commit.message ?? "").split("\n")[0] ?? "",
+            url: c.html_url,
+            sha7: c.sha.slice(0, 7),
+            timestamp: c.commit.author?.date ?? new Date().toISOString(),
+            additions: null,
+            deletions: null,
+          } as Commit;
+        }),
+      ),
+    );
+
+    const commits = perRepo
+      .filter((c): c is Commit => c !== null)
+      .sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1))
+      .slice(0, 10);
+
+    if (commits.length > 0) {
+      return NextResponse.json<CommitsResponse>(
+        { commits, fetchedAt, cached: false },
+        {
+          status: 200,
+          headers: {
+            "Cache-Control": `public, s-maxage=${REVALIDATE_EVENTS}, stale-while-revalidate=60`,
+          },
+        },
+      );
+    }
+
+    // Events empty + per-repo empty = genuinely no public commits.
+    return NextResponse.json<CommitsResponse>(
+      {
+        commits: [],
+        fetchedAt,
+        cached: false,
+        fallback: true,
+        reason: "empty",
       },
       { status: 200 },
     );
   }
 
-  const events =
-    (res.data as Array<{
-      type: string;
-      created_at: string;
-      repo: { name: string };
-      payload: unknown;
-    }>) ?? [];
-
-  const pushEvents = events.filter((e) => e && e.type === "PushEvent");
-
-  // Newest first: events are newest-first, but commits inside a push are
-  // oldest-first. Reverse each, then global-sort by timestamp.
-  const commits: Commit[] = pushEvents
-    .flatMap((e) => mapPushEvent(e).reverse())
-    .sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1))
-    .slice(0, 10);
-
+  // 3) Both endpoints failed. Generic error fallback.
   return NextResponse.json<CommitsResponse>(
-    { commits, fetchedAt, cached: false },
     {
-      status: 200,
-      headers: {
-        "Cache-Control": `public, s-maxage=${REVALIDATE_EVENTS}, stale-while-revalidate=60`,
-      },
+      commits: [],
+      fetchedAt,
+      cached: false,
+      fallback: true,
+      reason: "error",
+      error: `http_${reposRes.status || eventsRes.status || 0}`,
     },
+    { status: 200 },
   );
 }
 

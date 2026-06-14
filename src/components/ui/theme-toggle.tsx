@@ -8,8 +8,11 @@ const STORAGE_KEY = "tanmay-portfolio-theme";
 
 function readTheme(): Theme {
   if (typeof document === "undefined") return "dark";
+  // Trust the live <html> attribute (set by the inline init script on
+  // first paint). This is the same source of truth the rest of the app
+  // uses, so the toggle never disagrees with what the user sees.
   const attr = document.documentElement.getAttribute("data-theme");
-  if (attr === "light" || attr === "dark") return attr;
+  if (attr === "light") return "light";
   return "dark";
 }
 
@@ -18,6 +21,7 @@ function applyTheme(theme: Theme) {
   if (theme === "light") {
     root.setAttribute("data-theme", "light");
   } else {
+    // Dark is the default; remove the attribute so :root applies.
     root.removeAttribute("data-theme");
   }
 }
@@ -41,7 +45,21 @@ export function ThemeToggle() {
     } catch {
       // ignore (private mode, etc.)
     }
+    // Notify other instances of the toggle (mobile sheet has its own).
+    window.dispatchEvent(new CustomEvent("themechange", { detail: next }));
   };
+
+  // Listen for theme changes from other components (mobile sheet).
+  useEffect(() => {
+    const onChange = (e: Event) => {
+      const detail = (e as CustomEvent<Theme>).detail;
+      if (detail === "light" || detail === "dark") {
+        setTheme(detail);
+      }
+    };
+    window.addEventListener("themechange", onChange as EventListener);
+    return () => window.removeEventListener("themechange", onChange as EventListener);
+  }, []);
 
   // Render a fixed-width placeholder while not mounted to avoid layout shift.
   const label = !mounted
@@ -66,3 +84,4 @@ export function ThemeToggle() {
     </button>
   );
 }
+

@@ -165,25 +165,34 @@ export function ContactSection() {
           {/* Form */}
           <div data-reveal className="col-span-12 md:col-span-7">
             <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-              {/* Honeypot — hidden from humans, visible to dumb bots. */}
+              {/*
+                Honeypot — hidden from humans, visible to dumb bots.
+                Belt and suspenders: positioned off-screen, removed from
+                the tab order, hidden from assistive tech, and visually
+                inert. If a bot fills it, the server treats the submit
+                as spam and silently rejects.
+              */}
               <div
                 aria-hidden="true"
                 style={{
                   position: "absolute",
-                  left: -9999,
-                  top: "auto",
+                  left: "-9999px",
+                  top: "-9999px",
                   width: 1,
                   height: 1,
                   overflow: "hidden",
+                  pointerEvents: "none",
+                  opacity: 0,
                 }}
               >
-                <label htmlFor="website-hp">Website</label>
+                <label htmlFor="website-hp">Website (leave blank)</label>
                 <input
                   id="website-hp"
                   type="text"
                   name="website"
                   tabIndex={-1}
                   autoComplete="off"
+                  aria-hidden="true"
                   value={honeypot}
                   onChange={(e) => setHoneypot(e.target.value)}
                 />

@@ -22,13 +22,17 @@ type CommitsResponse = {
   fetchedAt: string;
   cached: boolean;
   fallback?: boolean;
+  reason?: "rate_limited" | "error" | "empty";
+  resetAt?: number;
   error?: string;
 };
 
 type FeedState = {
-  status: "loading" | "ready" | "fallback";
+  status: "loading" | "ready" | "fallback" | "empty";
   commits: Commit[];
   fetchedAt: string | null;
+  reason?: "rate_limited" | "error" | "empty";
+  resetAt?: number;
 };
 
 async function fetchCommits(): Promise<FeedState> {
@@ -37,7 +41,16 @@ async function fetchCommits(): Promise<FeedState> {
     if (!res.ok) throw new Error(`http_${res.status}`);
     const data = (await res.json()) as CommitsResponse;
     if (data.fallback) {
-      return { status: "fallback", commits: [], fetchedAt: data.fetchedAt ?? null };
+      if (data.reason === "empty") {
+        return { status: "empty", commits: [], fetchedAt: data.fetchedAt ?? null };
+      }
+      return {
+        status: "fallback",
+        commits: [],
+        fetchedAt: data.fetchedAt ?? null,
+        reason: data.reason,
+        resetAt: data.resetAt,
+      };
     }
     return {
       status: "ready",
@@ -45,7 +58,7 @@ async function fetchCommits(): Promise<FeedState> {
       fetchedAt: data.fetchedAt ?? null,
     };
   } catch {
-    return { status: "fallback", commits: [], fetchedAt: null };
+    return { status: "fallback", commits: [], fetchedAt: null, reason: "error" };
   }
 }
 
@@ -78,7 +91,7 @@ export function CommitFeed() {
       style={{ backgroundColor: "rgba(17,17,17,0.6)" }}
     >
       <FeedHeader status={feed.status} count={feed.commits.length} />
-      <FeedList commits={feed.commits} status={feed.status} />
+      <FeedList commits={feed.commits} status={feed.status} reason={feed.reason} resetAt={feed.resetAt} />
       {feed.status === "ready" && feed.commits.length > MAX_VISIBLE && (
         <a
           href="https://github.com/tanmay-alpha?tab=overview"
@@ -121,18 +134,42 @@ function FeedHeader({
   );
 }
 
-function FeedList({ commits, status }: { commits: Commit[]; status: FeedState["status"] }) {
+function FeedList({
+  commits,
+  status,
+  reason,
+  resetAt,
+}: {
+  commits: Commit[];
+  status: FeedState["status"];
+  reason?: FeedState["reason"];
+  resetAt?: number;
+}) {
   if (status === "fallback") {
+    if (reason === "rate_limited") {
+      return (
+        <p className="font-mono text-[11px] leading-relaxed text-zinc-500">
+          ● Rate-limited by GitHub — try again in {minutesUntil(resetAt)} min
+        </p>
+      );
+    }
     return (
       <p className="font-mono text-[11px] leading-relaxed text-zinc-500">
         ● Feed temporarily unavailable — refresh in a few minutes
       </p>
     );
   }
-  if (status === "loading" || commits.length === 0) {
+  if (status === "empty") {
     return (
       <p className="font-mono text-[11px] leading-relaxed text-zinc-500">
-        ● Waiting for first commit…
+        ● No public commits in the last 90 days yet — keep shipping.
+      </p>
+    );
+  }
+  if (status === "loading") {
+    return (
+      <p className="font-mono text-[11px] leading-relaxed text-zinc-500">
+        ● Fetching latest commits…
       </p>
     );
   }
@@ -161,6 +198,13 @@ function FeedList({ commits, status }: { commits: Commit[]; status: FeedState["s
       ))}
     </ul>
   );
+}
+
+function minutesUntil(resetAt: number | undefined): number {
+  if (!resetAt) return 60;
+  const ms = resetAt * 1000 - Date.now();
+  if (ms <= 0) return 0;
+  return Math.max(1, Math.ceil(ms / 60000));
 }
 
 // ----- Helpers ------------------------------------------------------------
