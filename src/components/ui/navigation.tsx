@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { Menu, X } from "lucide-react";
+import { CommitFeedPill } from "./commit-feed";
 
 const NAV_LINKS = [
   { label: "Index", href: "#top" },
@@ -62,15 +63,18 @@ export function Navigation() {
           ))}
         </ul>
 
-        {/* Mobile: hamburger */}
-        <button
-          onClick={() => setIsOpen((s) => !s)}
-          aria-label={isOpen ? "Close menu" : "Open menu"}
-          aria-expanded={isOpen}
-          className="flex md:hidden h-9 w-9 items-center justify-center rounded-md border border-zinc-800 text-zinc-400 transition-colors duration-200 hover:border-zinc-700 hover:text-zinc-100"
-        >
-          {isOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-        </button>
+        {/* Mobile: shipping pill + hamburger */}
+        <div className="flex items-center gap-2 md:hidden">
+          <CommitFeedPill />
+          <button
+            onClick={() => setIsOpen((s) => !s)}
+            aria-label={isOpen ? "Close menu" : "Open menu"}
+            aria-expanded={isOpen}
+            className="flex h-9 w-9 items-center justify-center rounded-md border border-zinc-800 text-zinc-400 transition-colors duration-200 hover:border-zinc-700 hover:text-zinc-100"
+          >
+            {isOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile sheet */}

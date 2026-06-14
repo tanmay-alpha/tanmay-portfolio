@@ -1,4 +1,19 @@
-<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="40" height="40" rx="8" fill="#0A0A0A"/>
-  <path d="M15 25C20.5 20 25 15 25 15L25 25Z" fill="#D97757" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!--
+    Favicon: a Fraunces-italic "T" with a rust accent dot, on a transparent
+    background. Renders at 16/32/180/192px in browsers. We use a system
+    serif italic as the visual proxy (browsers can't pull self-hosted
+    fonts into favicons); at small sizes the difference is invisible.
+  -->
+  <text
+    x="32"
+    y="44"
+    text-anchor="middle"
+    font-family="'Times New Roman', 'Times', Georgia, serif"
+    font-style="italic"
+    font-weight="600"
+    font-size="48"
+    fill="#FAFAF7"
+  >T</text>
+  <circle cx="46" cy="44" r="3.5" fill="#D97757" />
 </svg>

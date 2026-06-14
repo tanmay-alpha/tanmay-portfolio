@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Fraunces, Inter_Tight, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { CommitFeedSidebar } from "@/components/ui/commit-feed";
+import { KonamiPanel } from "@/components/ui/konami-panel";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -97,6 +99,8 @@ export default function RootLayout({
     >
       <body className="min-h-screen bg-bg text-zinc-100 antialiased overflow-x-hidden">
         {children}
+        <CommitFeedSidebar />
+        <KonamiPanel />
         {plausibleDomain && (
           <Script
             defer
