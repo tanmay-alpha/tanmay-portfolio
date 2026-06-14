@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Inter_Tight, JetBrains_Mono } from "next/font/google";
+import { THEME_INIT_SCRIPT } from "./theme-initializer";
 import "./globals.css";
 import { TopNav } from "@/components/ui/top-nav";
 
@@ -91,6 +92,11 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-screen bg-bg text-text-1 antialiased overflow-x-hidden">
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }}
+        />
         <a href="#top" className="skip-link">Skip to content</a>
         <TopNav />
         {children}

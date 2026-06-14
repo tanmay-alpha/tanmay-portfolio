@@ -1,7 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { useEffect, useRef } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 
 type Experience = {
   company: string;
@@ -60,32 +59,10 @@ const EXPERIENCE: ReadonlyArray<Experience> = [
 ];
 
 export function ExperienceSection() {
-  const sectionRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    const root = sectionRef.current;
-    if (!root) return;
-    const targets = Array.from(root.querySelectorAll<HTMLElement>("[data-reveal]"));
-    targets.forEach((el) => el.classList.add("reveal"));
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("is-visible");
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.1, rootMargin: "0px 0px -40px 0px" },
-    );
-    targets.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, []);
+  const reduced = useReducedMotion();
 
   return (
     <section
-      ref={sectionRef}
       id="experience"
       className="relative w-full border-t border-border py-24 md:py-32 lg:py-40"
     >
@@ -96,10 +73,10 @@ export function ExperienceSection() {
           </div>
           <div className="col-span-12 md:col-span-10">
             <motion.h2
-              initial={{ opacity: 0, y: 12 }}
+              initial={reduced ? false : { opacity: 0, y: 12 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.4 }}
-              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              viewport={{ once: true, amount: 0.4, margin: "0px 0px -40px 0px" }}
+              transition={reduced ? { duration: 0 } : { duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
               className="section-heading"
             >
               Experience
@@ -109,12 +86,32 @@ export function ExperienceSection() {
 
         <div className="grid-12">
           <div className="col-span-12 md:col-span-10 md:col-start-3">
-            <ol className="experience-list">
+            <motion.ol
+              className="experience-list"
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, amount: 0.1, margin: "0px 0px -40px 0px" }}
+              variants={{
+                hidden: {},
+                show: {
+                  transition: reduced
+                    ? { staggerChildren: 0 }
+                    : { staggerChildren: 0.1, delayChildren: 0.05 },
+                },
+              }}
+            >
               {EXPERIENCE.map((entry) => (
-                <li
+                <motion.li
                   key={entry.company}
-                  data-reveal
                   className="experience-item"
+                  variants={{
+                    hidden: reduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 14 },
+                    show: {
+                      opacity: 1,
+                      y: 0,
+                      transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const },
+                    },
+                  }}
                 >
                   <h3 className="experience-company">{entry.company}</h3>
                   <p className="experience-role">{entry.role}</p>
@@ -124,11 +121,17 @@ export function ExperienceSection() {
                       <li key={b}>{b}</li>
                     ))}
                   </ul>
-                </li>
+                </motion.li>
               ))}
-            </ol>
+            </motion.ol>
 
-            <div data-reveal className="mt-16 border-t border-border pt-8">
+            <motion.div
+              className="mt-16 border-t border-border pt-8"
+              initial={reduced ? false : { opacity: 0, y: 14 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2, margin: "0px 0px -40px 0px" }}
+              transition={reduced ? { duration: 0 } : { duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            >
               <p className="eyebrow">Working toward</p>
               <p className="mt-3 max-w-2xl text-[14px] leading-[1.7] text-text-1">
                 An AI/ML or full-stack role at a company where the engineering
@@ -136,7 +139,7 @@ export function ExperienceSection() {
                 has real consequences — backtests that risk real P&amp;L, fraud
                 systems that block real attacks, products real users depend on.
               </p>
-            </div>
+            </motion.div>
 
             <div className="mt-10">
               <a
