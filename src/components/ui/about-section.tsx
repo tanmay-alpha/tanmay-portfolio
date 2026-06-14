@@ -1,15 +1,100 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
-const STATS = [
-  { label: "CGPA", value: "8.49", suffix: "/ 10" },
-  { label: "Active projects", value: "3", suffix: "" },
-  { label: "GitHub stars", value: "—", suffix: "" },
-  { label: "Years trading", value: "2", suffix: "" },
+type StatsResponse = {
+  stars: number | null;
+  fetchedAt: string;
+  cached: boolean;
+  fallback?: boolean;
+};
+
+type Commit = { id: string; timestamp: string };
+
+type CommitsResponse = {
+  commits: Commit[];
+  fetchedAt: string;
+  cached: boolean;
+  fallback?: boolean;
+};
+
+const STATS_TEMPLATE = [
+  { label: "CGPA", suffix: "/ 10" },
+  { label: "Active projects", suffix: "" },
+  { label: "GitHub stars", suffix: "" },
+  { label: "Years trading", suffix: "" },
 ] as const;
 
+function relativeTime(iso: string): string {
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return "—";
+  const diff = Date.now() - t;
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return "just now";
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const days = Math.floor(hr / 24);
+  if (days < 7) return `${days}d ago`;
+  if (days < 30) return `${Math.floor(days / 7)}w ago`;
+  return `${Math.floor(days / 30)}mo ago`;
+}
+
+function formatDate(d: Date): string {
+  return d.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
 export function AboutSection() {
+  const [stars, setStars] = useState<number | null>(null);
+  const [lastCommit, setLastCommit] = useState<{ iso: string; live: boolean } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadStats = async () => {
+      try {
+        const res = await fetch("/api/commits?stats=1", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = (await res.json()) as StatsResponse;
+        if (!cancelled && data.stars !== null) setStars(data.stars);
+      } catch {
+        // Quiet degradation.
+      }
+    };
+    const loadCommits = async () => {
+      try {
+        const res = await fetch("/api/commits", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = (await res.json()) as CommitsResponse;
+        if (cancelled) return;
+        if (!data.fallback && data.commits[0]) {
+          setLastCommit({ iso: data.commits[0].timestamp, live: true });
+        }
+      } catch {
+        if (cancelled) return;
+        setLastCommit({ iso: "", live: false });
+      }
+    };
+    void loadStats();
+    void loadCommits();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const stats = STATS_TEMPLATE.map((s) => {
+    if (s.label === "GitHub stars") {
+      return { ...s, value: stars === null ? "—" : stars.toString() };
+    }
+    if (s.label === "CGPA") return { ...s, value: "8.49" };
+    if (s.label === "Active projects") return { ...s, value: "3" };
+    return { ...s, value: "2" }; // Years trading
+  });
+
   return (
     <section
       id="about"
@@ -58,7 +143,7 @@ export function AboutSection() {
 
             {/* Stats */}
             <dl className="mt-12 grid grid-cols-2 gap-6 md:grid-cols-4 md:gap-8">
-              {STATS.map((stat) => (
+              {stats.map((stat) => (
                 <div key={stat.label} className="border-t border-zinc-800 pt-4">
                   <dt className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
                     {stat.label}
@@ -73,9 +158,18 @@ export function AboutSection() {
               ))}
             </dl>
 
-            {/* "Currently" timestamp */}
+            {/* Live last-commit timestamp */}
             <p className="mt-12 font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-              Written 14 June 2026 · Updated weekly
+              {lastCommit && lastCommit.iso ? (
+                <>
+                  Last commit: {relativeTime(lastCommit.iso)}
+                  {lastCommit.live && (
+                    <span className="ml-2 text-accent">(live)</span>
+                  )}
+                </>
+              ) : (
+                <>Last updated: {formatDate(new Date())}</>
+              )}
             </p>
 
             {/* Resume link */}
