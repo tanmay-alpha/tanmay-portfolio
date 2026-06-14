@@ -15,8 +15,8 @@ const EXPERIENCE: ReadonlyArray<Experience> = [
     role: "Quant ML Intern",
     dates: "Jun 2026 — Jul 2026",
     bullets: [
-      "Backtesting systematic strategies on NSE data with Python and Pandas",
-      "Building filter logic and data validation for TradeVed's stock screener",
+      "Backtested systematic NSE strategies in Python with Pandas; iterated on filters and risk logic",
+      "Built data validation + filter pipeline for TradeVed's stock screener (live in production)",
     ],
   },
   {
@@ -24,8 +24,8 @@ const EXPERIENCE: ReadonlyArray<Experience> = [
     role: "Web Developer Intern",
     dates: "May 2026 — Present",
     bullets: [
-      "Built and deployed dynamicbubble.agency from scratch",
-      "React, Node.js, MongoDB; shipped questionnaire flows, service pages, consultation forms",
+      "Built and shipped dynamicbubble.agency from scratch — service pages, questionnaire flows, consultation forms",
+      "React, Node.js, MongoDB, deployed on Vercel",
     ],
   },
   {
@@ -34,6 +34,7 @@ const EXPERIENCE: ReadonlyArray<Experience> = [
     dates: "May 2026 — Present",
     bullets: [
       "Designed 10+ coding challenges for LLM training",
+      "Built a 'challenge-authoring' workflow inside ai-workspace — used it to ship the Shipd challenges faster",
       "Shipd has paid out $2M+ to contributors",
     ],
   },
@@ -52,6 +53,7 @@ const EXPERIENCE: ReadonlyArray<Experience> = [
     dates: "Nov 2024 — Dec 2025",
     bullets: [
       "Coordinated logistics for large-scale entrepreneurship events",
+      "First-year hire, ran ops for 2 flagship events",
     ],
   },
 ];
@@ -132,6 +134,15 @@ export function ExperienceSection() {
                 </motion.li>
               ))}
             </ol>
+            <div className="mt-16 border-t border-white/[0.06] pt-8">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+                Working toward
+              </p>
+              <p className="mt-3 max-w-2xl font-sans text-sm leading-relaxed text-paper">
+                An AI/ML or full-stack role at a company where the engineering moves money or moves people. I&apos;m strongest when the work has real consequences — backtests that risk real P&amp;L, fraud systems that block real attacks, products real users depend on.
+              </p>
+            </div>
+
             <div className="mt-12">
               <a
                 href="/resume.pdf"
