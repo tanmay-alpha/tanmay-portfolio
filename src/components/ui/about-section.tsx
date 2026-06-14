@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { NowSidebar } from "./now-sidebar";
 
 type StatsResponse = {
   stars: number | null;
@@ -92,7 +93,7 @@ export function AboutSection() {
       id="about"
       className="relative w-full border-t border-white/[0.06] py-24 md:py-32 lg:py-40"
     >
-      <div className="mx-auto max-w-container px-6 lg:px-8">
+      <div className="mx-auto max-w-[1100px] px-6 lg:px-8">
         <div className="grid-12 gap-y-12">
           {/* Left col: section index */}
           <div className="col-span-12 md:col-span-2 flex flex-col gap-6">
@@ -133,51 +134,55 @@ export function AboutSection() {
               or full-stack roles that actually move money.
             </p>
 
-            {/* Stats grid: 3 small tiles + full-width "Looking for" tile */}
-            <dl className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 md:gap-8">
-              {STATIC_STATS.map((stat) => (
-                <div key={stat.label} className="border-t border-white/[0.06] pt-4">
+            {/* 2-col layout on lg+: NOW block left, stats grid right. Stack on mobile (NOW first). */}
+            <div className="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_1.4fr] lg:gap-10">
+              <NowSidebar />
+
+              <dl className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 md:gap-8">
+                {STATIC_STATS.map((stat) => (
+                  <div key={stat.label} className="border-t border-white/[0.06] pt-4">
+                    <dt className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+                      {stat.label}
+                    </dt>
+                    <dd className="mt-2 font-serif italic text-5xl font-light text-paper">
+                      {stat.value}
+                      {stat.suffix && (
+                        <span className="ml-1 font-mono text-sm text-zinc-500">{stat.suffix}</span>
+                      )}
+                    </dd>
+                  </div>
+                ))}
+
+                {/* Public repos (live) */}
+                <div className="border-t border-white/[0.06] pt-4">
                   <dt className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-                    {stat.label}
+                    Public repos
                   </dt>
                   <dd className="mt-2 font-serif italic text-5xl font-light text-paper">
-                    {stat.value}
-                    {stat.suffix && (
-                      <span className="ml-1 font-mono text-sm text-zinc-500">{stat.suffix}</span>
-                    )}
+                    {publicReposDisplay}
                   </dd>
                 </div>
-              ))}
 
-              {/* Public repos (live) */}
-              <div className="border-t border-white/[0.06] pt-4">
-                <dt className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-                  Public repos
-                </dt>
-                <dd className="mt-2 font-serif italic text-5xl font-light text-paper">
-                  {publicReposDisplay}
-                </dd>
-              </div>
-
-              {/* Looking for — full-width tile */}
-              <div className="sm:col-span-2 md:col-span-3 border-t border-white/[0.06] pt-6">
-                <dt className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-                  Looking for
-                </dt>
-                <dd className="mt-3 max-w-2xl font-sans text-base leading-relaxed text-paper">
-                  AI/ML or full-stack roles @ fintech, trading, or YC-stage.
-                </dd>
-                <dd className="mt-1 font-sans text-sm text-zinc-400">
-                  Internships (Fall 2026) and full-time (post-grad).
-                </dd>
-                <a
-                  href="#contact"
-                  className="mt-4 inline-block font-mono text-xs text-zinc-300 underline decoration-zinc-700 underline-offset-4 transition-colors duration-200 hover:text-zinc-100 hover:decoration-accent"
-                >
-                  [ get in touch → ]
-                </a>
-              </div>
-            </dl>
+                {/* Looking for — full-width tile */}
+                <div className="sm:col-span-2 md:col-span-3 border-t border-white/[0.06] pt-6">
+                  <dt className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+                    Open to
+                  </dt>
+                  <dd className="mt-3 max-w-2xl font-sans text-base leading-relaxed text-paper">
+                    AI/ML or full-stack roles @ fintech, trading, or YC-stage.
+                  </dd>
+                  <dd className="mt-1 font-sans text-sm text-zinc-400">
+                    Internships (Fall 2026) and full-time (post-grad).
+                  </dd>
+                  <a
+                    href="#contact"
+                    className="mt-4 inline-block font-mono text-xs text-zinc-300 underline decoration-zinc-700 underline-offset-4 transition-colors duration-200 hover:text-zinc-100 hover:decoration-accent"
+                  >
+                    [ get in touch → ]
+                  </a>
+                </div>
+              </dl>
+            </div>
 
             {/* Live last-commit timestamp */}
             <p className="mt-12 font-mono text-[10px] uppercase tracking-widest text-zinc-500">
