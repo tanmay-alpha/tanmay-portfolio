@@ -25,7 +25,7 @@ export function MoreWorkSection() {
   return (
     <section
       id="more-work"
-      className="relative w-full border-t border-zinc-800 py-24 md:py-32"
+      className="relative w-full border-t border-white/[0.06] py-24 md:py-32 lg:py-40"
     >
       <div className="mx-auto max-w-container px-6 lg:px-8">
         <div className="grid-12 gap-y-12">

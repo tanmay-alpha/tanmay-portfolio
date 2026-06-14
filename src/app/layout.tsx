@@ -4,6 +4,9 @@ import { Fraunces, Inter_Tight, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { CommitFeedSidebar } from "@/components/ui/commit-feed";
 import { KonamiPanel } from "@/components/ui/konami-panel";
+import { DockNav } from "@/components/ui/dock-nav";
+import { NowSidebar } from "@/components/ui/now-sidebar";
+import { NowSheetMobile } from "@/components/ui/now-sheet-mobile";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -98,9 +101,13 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-screen bg-bg text-zinc-100 antialiased overflow-x-hidden">
+        <a href="#top" className="skip-link">Skip to content</a>
         {children}
         <CommitFeedSidebar />
         <KonamiPanel />
+        <DockNav />
+        <NowSidebar />
+        <NowSheetMobile />
         {plausibleDomain && (
           <Script
             defer
