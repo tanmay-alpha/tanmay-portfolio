@@ -2,6 +2,7 @@ import { Navigation } from "@/components/ui/navigation";
 import { Hero } from "@/components/ui/hero";
 import { AboutSection } from "@/components/ui/about-section";
 import { WorkSection } from "@/components/ui/work-section";
+import { MoreWorkSection } from "@/components/ui/more-work-section";
 import { ExperienceSection } from "@/components/ui/experience-section";
 import { StackSection } from "@/components/ui/stack-section";
 import { ContactSection } from "@/components/ui/contact-section";
@@ -14,6 +15,7 @@ export default function Home() {
       <Hero />
       <AboutSection />
       <WorkSection />
+      <MoreWorkSection />
       <ExperienceSection />
       <StackSection />
       <ContactSection />
