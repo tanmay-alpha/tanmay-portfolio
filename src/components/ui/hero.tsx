@@ -34,7 +34,7 @@ export function Hero() {
       style={{ minHeight: "calc(100svh - 56px)" }}
     >
       <Hero3D />
-      <div className="mx-auto max-w-container px-6 lg:px-8">
+      <div className="mx-auto max-w-[1100px] px-6 lg:px-8">
         {/* Eyebrow row */}
         <div className="flex h-16 items-center justify-between border-b border-zinc-800">
           <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">

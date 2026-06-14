@@ -33,12 +33,11 @@ export function DockNav() {
             >
               <motion.span
                 aria-hidden
-                className="flex h-4 w-4 items-center justify-center"
+                className="flex h-4 w-4 items-center justify-center md:hidden"
                 whileHover={reduced ? undefined : { y: -2 }}
                 transition={{ type: "spring", stiffness: 400, damping: 22 }}
               >
-                <Icon className="h-3.5 w-3.5 md:hidden" />
-                <span className="hidden md:inline">{label}</span>
+                <Icon className="h-3.5 w-3.5" />
               </motion.span>
               <span className="hidden md:inline">{label}</span>
             </a>

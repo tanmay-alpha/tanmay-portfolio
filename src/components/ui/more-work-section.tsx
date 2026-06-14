@@ -58,7 +58,7 @@ export function MoreWorkSection() {
       id="more-work"
       className="relative w-full border-t border-white/[0.06] py-24 md:py-32 lg:py-40"
     >
-      <div className="mx-auto max-w-container px-6 lg:px-8">
+      <div className="mx-auto max-w-[1100px] px-6 lg:px-8">
         <div className="grid-12 mb-16 md:mb-24 gap-y-12">
           <div className="col-span-12 md:col-span-2">
             <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">

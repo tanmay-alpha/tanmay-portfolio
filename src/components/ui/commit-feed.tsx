@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
-import { Github } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
 
 const REVALIDATE_MS = 5 * 60 * 1000;
 const MAX_VISIBLE = 8;
@@ -50,33 +49,13 @@ async function fetchCommits(): Promise<FeedState> {
   }
 }
 
-// ----- Sidebar (desktop) --------------------------------------------------
-
-export function CommitFeedSidebar() {
+/**
+ * CommitFeed — desktop only, no fixed positioning, no parallax.
+ * Its parent rail applies `position: sticky` so it sticks as the user
+ * scrolls through the mid-page sections (Work → More Work → Experience).
+ */
+export function CommitFeed() {
   const [feed, setFeed] = useState<FeedState>({ status: "loading", commits: [], fetchedAt: null });
-  const [open, setOpen] = useState(false);
-  const [heroInView, setHeroInView] = useState(true);
-  const reduced = useReducedMotion();
-  const { scrollY } = useScroll();
-  // Subtle parallax: lifts up as the user scrolls, so the feed never
-  // visually overlaps section content.
-  const y = useTransform(scrollY, [0, 800], [0, reduced ? 0 : -24]);
-
-  // Watch the hero — hide the sidebar whenever the hero occupies the
-  // viewport so it never sits on top of the photo.
-  useEffect(() => {
-    const hero = document.getElementById("top");
-    if (!hero) return;
-    const obs = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-        if (entry) setHeroInView(entry.isIntersecting);
-      },
-      { threshold: 0.05 }
-    );
-    obs.observe(hero);
-    return () => obs.disconnect();
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -93,78 +72,24 @@ export function CommitFeedSidebar() {
   }, []);
 
   return (
-    <motion.aside
+    <div
       aria-label="Live GitHub commit feed"
-      className="pointer-events-none fixed right-0 top-1/2 z-30 hidden -translate-y-1/2 lg:block"
-      style={{ y, opacity: heroInView ? 0 : 1 }}
+      className="w-[240px] rounded-md border-l border-white/5 p-4 backdrop-blur-md"
+      style={{ backgroundColor: "rgba(17,17,17,0.6)" }}
     >
-      <div
-        className="pointer-events-auto w-[260px] rounded-l-md border-l border-white/5 p-4 backdrop-blur-md"
-        style={{ backgroundColor: "rgba(17,17,17,0.6)" }}
-      >
-        <FeedHeader
-          status={feed.status}
-          count={feed.commits.length}
-          onOpenMobile={() => setOpen(true)}
-          hidePill
-        />
-        <FeedList commits={feed.commits} status={feed.status} />
-        {feed.status === "ready" && feed.commits.length > MAX_VISIBLE && (
-          <a
-            href="https://github.com/tanmay-alpha?tab=overview"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-3 block font-mono text-[10px] text-zinc-500 transition-colors duration-150 hover:text-zinc-300"
-          >
-            + {feed.commits.length - MAX_VISIBLE} more →
-          </a>
-        )}
-      </div>
-
-      {/* Mobile bottom sheet — same data, opened by the nav pill. */}
-      <AnimatePresence>
-        {open && (
-          <CommitSheet onClose={() => setOpen(false)} feed={feed} />
-        )}
-      </AnimatePresence>
-    </motion.aside>
-  );
-}
-
-// ----- Nav pill (mobile) --------------------------------------------------
-
-export function CommitFeedPill() {
-  const [feed, setFeed] = useState<FeedState>({ status: "loading", commits: [], fetchedAt: null });
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      const next = await fetchCommits();
-      if (!cancelled) setFeed(next);
-    };
-    void load();
-    const id = setInterval(load, REVALIDATE_MS);
-    return () => {
-      cancelled = true;
-      clearInterval(id);
-    };
-  }, []);
-
-  return (
-    <>
-      <button
-        onClick={() => setOpen(true)}
-        aria-label="Open shipping feed"
-        className="flex md:hidden h-9 items-center gap-2 rounded-md border border-zinc-800 bg-transparent px-3 text-zinc-400 transition-colors duration-200 hover:border-zinc-700 hover:text-zinc-100"
-      >
-        <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#4ADE80]" />
-        <span className="font-mono text-[10px] uppercase tracking-widest">Shipping</span>
-      </button>
-      <AnimatePresence>
-        {open && <CommitSheet onClose={() => setOpen(false)} feed={feed} />}
-      </AnimatePresence>
-    </>
+      <FeedHeader status={feed.status} count={feed.commits.length} />
+      <FeedList commits={feed.commits} status={feed.status} />
+      {feed.status === "ready" && feed.commits.length > MAX_VISIBLE && (
+        <a
+          href="https://github.com/tanmay-alpha?tab=overview"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 block font-mono text-[10px] text-zinc-500 transition-colors duration-150 hover:text-zinc-300"
+        >
+          + {feed.commits.length - MAX_VISIBLE} more →
+        </a>
+      )}
+    </div>
   );
 }
 
@@ -173,13 +98,9 @@ export function CommitFeedPill() {
 function FeedHeader({
   status,
   count,
-  onOpenMobile,
-  hidePill,
 }: {
   status: FeedState["status"];
   count: number;
-  onOpenMobile: () => void;
-  hidePill?: boolean;
 }) {
   const reduced = useReducedMotion();
   return (
@@ -195,14 +116,6 @@ function FeedHeader({
       </span>
       {status === "ready" && (
         <span className="font-mono text-[10px] text-zinc-500">{count}</span>
-      )}
-      {!hidePill && (
-        <button
-          onClick={onOpenMobile}
-          className="ml-2 font-mono text-[10px] text-zinc-500 hover:text-zinc-300"
-        >
-          open
-        </button>
       )}
     </div>
   );
@@ -247,49 +160,6 @@ function FeedList({ commits, status }: { commits: Commit[]; status: FeedState["s
         </li>
       ))}
     </ul>
-  );
-}
-
-function CommitSheet({ onClose, feed }: { onClose: () => void; feed: FeedState }) {
-  const reduced = useReducedMotion();
-  return (
-    <>
-      <motion.div
-        aria-hidden
-        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: reduced ? 0 : 0.2 }}
-        onClick={onClose}
-      />
-      <motion.div
-        role="dialog"
-        aria-label="Live GitHub commit feed"
-        className="fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-y-auto rounded-t-2xl border-t border-zinc-800 bg-bg p-5 md:hidden"
-        initial={reduced ? false : { y: "100%" }}
-        animate={reduced ? { y: 0 } : { y: 0 }}
-        exit={reduced ? { y: 0 } : { y: "100%" }}
-        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-      >
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-zinc-800" aria-hidden />
-        <FeedHeader
-          status={feed.status}
-          count={feed.commits.length}
-          onOpenMobile={onClose}
-          hidePill
-        />
-        <FeedList commits={feed.commits} status={feed.status} />
-        <a
-          href="https://github.com/tanmay-alpha?tab=overview"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-4 flex items-center gap-2 font-mono text-xs text-zinc-300 transition-colors duration-150 hover:text-zinc-100"
-        >
-          <Github className="h-3.5 w-3.5" /> View activity on GitHub →
-        </a>
-      </motion.div>
-    </>
   );
 }
 

@@ -107,7 +107,7 @@ export function ContactSection() {
       id="contact"
       className="relative w-full border-t border-zinc-800 py-24 md:py-32"
     >
-      <div className="mx-auto max-w-container px-6 lg:px-8">
+      <div className="mx-auto max-w-[1100px] px-6 lg:px-8">
         <div className="grid-12 gap-y-12">
           <div className="col-span-12 md:col-span-5">
             <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-400">

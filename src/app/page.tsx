@@ -3,6 +3,7 @@ import { AboutSection } from "@/components/ui/about-section";
 import { WorkSection } from "@/components/ui/work-section";
 import { MoreWorkSection } from "@/components/ui/more-work-section";
 import { ExperienceSection } from "@/components/ui/experience-section";
+import { MidPageRail } from "@/components/ui/mid-page-rail";
 import { StackSection } from "@/components/ui/stack-section";
 import { ContactSection } from "@/components/ui/contact-section";
 import { Footer } from "@/components/ui/footer";
@@ -12,9 +13,11 @@ export default function Home() {
     <main className="relative">
       <Hero />
       <AboutSection />
-      <WorkSection />
-      <MoreWorkSection />
-      <ExperienceSection />
+      <MidPageRail>
+        <WorkSection />
+        <MoreWorkSection />
+        <ExperienceSection />
+      </MidPageRail>
       <StackSection />
       <ContactSection />
       <Footer />

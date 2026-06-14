@@ -30,8 +30,8 @@ export function Footer() {
   }, []);
 
   return (
-    <footer className="relative w-full border-t border-zinc-800 py-12">
-      <div className="mx-auto max-w-container px-6 lg:px-8 text-center">
+    <footer className="relative w-full border-t border-zinc-800 py-12 pb-32">
+      <div className="mx-auto max-w-[1100px] px-6 lg:px-8 text-center">
         <p className="font-mono text-[11px] text-zinc-500">
           Built and shipped in public by Tanmay Mangal. © 2026.
         </p>
