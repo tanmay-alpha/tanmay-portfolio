@@ -1,8 +1,17 @@
 "use client";
 
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { Github, Linkedin, Mail, FileText } from "lucide-react";
+
+// 3D bundle is heavy (Three.js + R3F + drei). Lazy-load so it's not in the
+// initial server bundle. SSR is disabled because the Canvas requires
+// window/document.
+const Hero3D = dynamic(
+  () => import("./hero-3d").then((m) => m.Hero3D),
+  { ssr: false },
+);
 
 const SOCIAL_LINKS = [
   { label: "GitHub", href: "https://github.com/tanmay-alpha", icon: Github },
@@ -24,6 +33,7 @@ export function Hero() {
       className="relative w-full"
       style={{ minHeight: "calc(100svh - 56px)" }}
     >
+      <Hero3D />
       <div className="mx-auto max-w-container px-6 lg:px-8">
         {/* Eyebrow row */}
         <div className="flex h-16 items-center justify-between border-b border-zinc-800">
