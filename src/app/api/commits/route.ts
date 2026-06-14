@@ -121,6 +121,7 @@ export type CommitsResponse = {
 
 export type StatsResponse = {
   stars: number | null;
+  publicRepos: number | null;
   fetchedAt: string;
   cached: boolean;
   fallback?: boolean;
@@ -193,19 +194,23 @@ async function getStats() {
 
   if (!res.ok) {
     return NextResponse.json<StatsResponse>(
-      { stars: null, fetchedAt, cached: false, fallback: true },
+      { stars: null, publicRepos: null, fetchedAt, cached: false, fallback: true },
       { status: 200 },
     );
   }
 
-  const repos = (res.data as Array<{ stargazers_count?: number; fork?: boolean }>) ?? [];
+  const repos = (res.data as Array<{ stargazers_count?: number; fork?: boolean; public?: boolean }>) ?? [];
   // Don't count forks — only stars on your own projects.
   const stars = repos
     .filter((r) => !r.fork)
     .reduce((acc, r) => acc + (typeof r.stargazers_count === "number" ? r.stargazers_count : 0), 0);
+  // Count public non-fork repos. (The owner listing returns public repos;
+  // a future-proofing check on `public` keeps the math honest if GitHub
+  // changes the listing semantics.)
+  const publicRepos = repos.filter((r) => !r.fork && r.public !== false).length;
 
   return NextResponse.json<StatsResponse>(
-    { stars, fetchedAt, cached: false },
+    { stars, publicRepos, fetchedAt, cached: false },
     {
       status: 200,
       headers: {

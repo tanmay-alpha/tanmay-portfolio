@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 
 type StatsResponse = {
   stars: number | null;
+  publicRepos: number | null;
   fetchedAt: string;
   cached: boolean;
   fallback?: boolean;
@@ -19,11 +20,9 @@ type CommitsResponse = {
   fallback?: boolean;
 };
 
-const STATS_TEMPLATE = [
-  { label: "CGPA", suffix: "/ 10" },
-  { label: "Active projects", suffix: "" },
-  { label: "GitHub stars", suffix: "" },
-  { label: "Years trading", suffix: "" },
+const STATIC_STATS = [
+  { label: "CGPA", value: "8.49", suffix: "/ 10" },
+  { label: "Tests written", value: "600", suffix: "+" },
 ] as const;
 
 function relativeTime(iso: string): string {
@@ -50,7 +49,7 @@ function formatDate(d: Date): string {
 }
 
 export function AboutSection() {
-  const [stars, setStars] = useState<number | null>(null);
+  const [publicRepos, setPublicRepos] = useState<number | null>(null);
   const [lastCommit, setLastCommit] = useState<{ iso: string; live: boolean } | null>(null);
 
   useEffect(() => {
@@ -60,7 +59,7 @@ export function AboutSection() {
         const res = await fetch("/api/commits?stats=1", { cache: "no-store" });
         if (!res.ok) return;
         const data = (await res.json()) as StatsResponse;
-        if (!cancelled && data.stars !== null) setStars(data.stars);
+        if (!cancelled && data.publicRepos !== null) setPublicRepos(data.publicRepos);
       } catch {
         // Quiet degradation.
       }
@@ -86,14 +85,7 @@ export function AboutSection() {
     };
   }, []);
 
-  const stats = STATS_TEMPLATE.map((s) => {
-    if (s.label === "GitHub stars") {
-      return { ...s, value: stars === null ? "—" : stars.toString() };
-    }
-    if (s.label === "CGPA") return { ...s, value: "8.49" };
-    if (s.label === "Active projects") return { ...s, value: "3" };
-    return { ...s, value: "2" }; // Years trading
-  });
+  const publicReposDisplay = publicRepos === null ? "5" : publicRepos.toString();
 
   return (
     <section
@@ -141,21 +133,50 @@ export function AboutSection() {
               or full-stack roles that actually move money.
             </p>
 
-            {/* Stats */}
-            <dl className="mt-12 grid grid-cols-2 gap-6 md:grid-cols-4 md:gap-8">
-              {stats.map((stat) => (
-                <div key={stat.label} className="border-t border-zinc-800 pt-4">
+            {/* Stats grid: 3 small tiles + full-width "Looking for" tile */}
+            <dl className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 md:gap-8">
+              {STATIC_STATS.map((stat) => (
+                <div key={stat.label} className="border-t border-white/[0.06] pt-4">
                   <dt className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
                     {stat.label}
                   </dt>
-                  <dd className="mt-2 font-mono text-2xl text-zinc-100">
+                  <dd className="mt-2 font-serif italic text-5xl font-light text-paper">
                     {stat.value}
                     {stat.suffix && (
-                      <span className="ml-1 text-sm text-zinc-500">{stat.suffix}</span>
+                      <span className="ml-1 font-mono text-sm text-zinc-500">{stat.suffix}</span>
                     )}
                   </dd>
                 </div>
               ))}
+
+              {/* Public repos (live) */}
+              <div className="border-t border-white/[0.06] pt-4">
+                <dt className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+                  Public repos
+                </dt>
+                <dd className="mt-2 font-serif italic text-5xl font-light text-paper">
+                  {publicReposDisplay}
+                </dd>
+              </div>
+
+              {/* Looking for — full-width tile */}
+              <div className="sm:col-span-2 md:col-span-3 border-t border-white/[0.06] pt-6">
+                <dt className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+                  Looking for
+                </dt>
+                <dd className="mt-3 max-w-2xl font-sans text-base leading-relaxed text-paper">
+                  AI/ML or full-stack roles @ fintech, trading, or YC-stage.
+                </dd>
+                <dd className="mt-1 font-sans text-sm text-zinc-400">
+                  Internships (Fall 2026) and full-time (post-grad).
+                </dd>
+                <a
+                  href="#contact"
+                  className="mt-4 inline-block font-mono text-xs text-zinc-300 underline decoration-zinc-700 underline-offset-4 transition-colors duration-200 hover:text-zinc-100 hover:decoration-accent"
+                >
+                  [ get in touch → ]
+                </a>
+              </div>
             </dl>
 
             {/* Live last-commit timestamp */}
