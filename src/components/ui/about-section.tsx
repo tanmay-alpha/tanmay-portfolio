@@ -1,114 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { NowSidebar } from "./now-sidebar";
-
-type StatsResponse = {
-  stars: number | null;
-  publicRepos: number | null;
-  fetchedAt: string;
-  cached: boolean;
-  fallback?: boolean;
-};
-
-type Commit = { id: string; timestamp: string };
-
-type CommitsResponse = {
-  commits: Commit[];
-  fetchedAt: string;
-  cached: boolean;
-  fallback?: boolean;
-};
-
-const STATIC_STATS = [
-  { label: "CGPA", value: "8.49", suffix: "/ 10" },
-  { label: "Tests written", value: "600", suffix: "+" },
-] as const;
-
-function relativeTime(iso: string): string {
-  const t = Date.parse(iso);
-  if (Number.isNaN(t)) return "—";
-  const diff = Date.now() - t;
-  const min = Math.floor(diff / 60000);
-  if (min < 1) return "just now";
-  if (min < 60) return `${min}m ago`;
-  const hr = Math.floor(min / 60);
-  if (hr < 24) return `${hr}h ago`;
-  const days = Math.floor(hr / 24);
-  if (days < 7) return `${days}d ago`;
-  if (days < 30) return `${Math.floor(days / 7)}w ago`;
-  return `${Math.floor(days / 30)}mo ago`;
-}
-
-function formatDate(d: Date): string {
-  return d.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-}
 
 export function AboutSection() {
-  const [publicRepos, setPublicRepos] = useState<number | null>(null);
-  const [lastCommit, setLastCommit] = useState<{ iso: string; live: boolean } | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    const loadStats = async () => {
-      try {
-        const res = await fetch("/api/commits?stats=1", { cache: "no-store" });
-        if (!res.ok) return;
-        const data = (await res.json()) as StatsResponse;
-        if (!cancelled && data.publicRepos !== null) setPublicRepos(data.publicRepos);
-      } catch {
-        // Quiet degradation.
-      }
-    };
-    const loadCommits = async () => {
-      try {
-        const res = await fetch("/api/commits", { cache: "no-store" });
-        if (!res.ok) return;
-        const data = (await res.json()) as CommitsResponse;
-        if (cancelled) return;
-        if (!data.fallback && data.commits[0]) {
-          setLastCommit({ iso: data.commits[0].timestamp, live: true });
-        }
-      } catch {
-        if (cancelled) return;
-        setLastCommit({ iso: "", live: false });
-      }
-    };
-    void loadStats();
-    void loadCommits();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const publicReposDisplay = publicRepos === null ? "5" : publicRepos.toString();
-
   return (
     <section
       id="about"
-      className="relative w-full border-t border-white/[0.06] py-24 md:py-32 lg:py-40"
+      className="relative w-full border-t border-border py-24 md:py-32 lg:py-40"
     >
       <div className="mx-auto max-w-[1100px] px-6 lg:px-8">
         <div className="grid-12 gap-y-12">
-          {/* Left col: section index */}
+          {/* Left col: section label */}
           <div className="col-span-12 md:col-span-2 flex flex-col gap-6">
-            <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-400">
-              About
-            </span>
-            <motion.span
-              initial={{ opacity: 0, y: 12 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.4 }}
-              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-              className="font-serif italic text-7xl font-light text-zinc-700 md:text-8xl"
-            >
-              01
-            </motion.span>
+            <span className="eyebrow">About</span>
           </div>
 
           {/* Right col: body */}
@@ -119,89 +23,31 @@ export function AboutSection() {
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             className="col-span-12 md:col-span-10"
           >
-            <p className="max-w-3xl font-serif text-2xl font-light italic leading-snug text-zinc-100 text-pretty md:text-3xl">
-              I&apos;m Tanmay — a 2nd-year CS undergrad at VIT Bhopal, currently building
-              trading systems by day and AI tools by night.
+            <p className="max-w-3xl text-[20px] leading-[1.55] text-text-1 text-balance md:text-[22px]">
+              2nd-year Computer Science &amp; Engineering student at VIT Bhopal —
+              interested in the intersection of markets, machine learning, and
+              systems that move money.
             </p>
 
-            <p className="mt-8 max-w-2xl text-base leading-relaxed text-zinc-300 text-pretty md:text-lg">
-              My work lives at the intersection of full-stack engineering, machine learning,
-              and quant thinking — <span className="text-paper">MAET</span> is a real-time NSE
-              terminal I built to scratch my own itch, <span className="text-paper">Lumint</span>{" "}
-              is an AI fraud platform I started at a hackathon, and <span className="text-paper">FinCalc</span>{" "}
-              is what happens when a bored engineer turns Indian income tax law into a weekend
-              project. I trade on Zerodha, ship in public, and I&apos;m always open to AI/ML
-              or full-stack roles that actually move money.
+            <p className="mt-6 max-w-2xl text-[15px] leading-[1.75] text-text-2 text-pretty md:text-base">
+              I got into programming because I wanted to understand how markets
+              work. That curiosity led to trading on Zerodha, then to building
+              tools I couldn&apos;t find, then to machine learning because the
+              questions kept getting harder. Most of my work right now is at the
+              intersection of financial data and intelligent systems.
             </p>
 
-            {/* 2-col layout on lg+: NOW block left, stats grid right. Stack on mobile (NOW first). */}
-            <div className="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_1.4fr] lg:gap-10">
-              <NowSidebar />
-
-              <dl className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 md:gap-8">
-                {STATIC_STATS.map((stat) => (
-                  <div key={stat.label} className="border-t border-white/[0.06] pt-4">
-                    <dt className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-                      {stat.label}
-                    </dt>
-                    <dd className="mt-2 font-serif italic text-5xl font-light text-paper">
-                      {stat.value}
-                      {stat.suffix && (
-                        <span className="ml-1 font-mono text-sm text-zinc-500">{stat.suffix}</span>
-                      )}
-                    </dd>
-                  </div>
-                ))}
-
-                {/* Public repos (live) */}
-                <div className="border-t border-white/[0.06] pt-4">
-                  <dt className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-                    Public repos
-                  </dt>
-                  <dd className="mt-2 font-serif italic text-5xl font-light text-paper">
-                    {publicReposDisplay}
-                  </dd>
-                </div>
-
-                {/* Looking for — full-width tile */}
-                <div className="sm:col-span-2 md:col-span-3 border-t border-white/[0.06] pt-6">
-                  <dt className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-                    Open to
-                  </dt>
-                  <dd className="mt-3 max-w-2xl font-sans text-base leading-relaxed text-paper">
-                    AI/ML or full-stack roles @ fintech, trading, or YC-stage.
-                  </dd>
-                  <dd className="mt-1 font-sans text-sm text-zinc-400">
-                    Internships (Fall 2026) and full-time (post-grad).
-                  </dd>
-                  <a
-                    href="#contact"
-                    className="mt-4 inline-block font-mono text-xs text-zinc-300 underline decoration-zinc-700 underline-offset-4 transition-colors duration-200 hover:text-zinc-100 hover:decoration-accent"
-                  >
-                    [ get in touch → ]
-                  </a>
-                </div>
-              </dl>
-            </div>
-
-            {/* Live last-commit timestamp */}
-            <p className="mt-12 font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-              {lastCommit && lastCommit.iso ? (
-                <>
-                  Last commit: {relativeTime(lastCommit.iso)}
-                  {lastCommit.live && (
-                    <span className="ml-2 text-accent">(live)</span>
-                  )}
-                </>
-              ) : (
-                <>Last updated: {formatDate(new Date())}</>
-              )}
+            <p className="mt-6 max-w-2xl text-[15px] leading-[1.75] text-text-2 text-pretty md:text-base">
+              Outside of code: I&apos;m genuinely obsessed with food — cooking
+              it, finding it in new cities, thinking about it too much. I travel
+              when I can. I think staying curious about everything makes you a
+              better engineer.
             </p>
 
             {/* Resume link */}
             <a
               href="/resume.pdf"
-              className="mt-4 inline-block font-mono text-xs text-zinc-300 underline decoration-zinc-700 underline-offset-4 transition-colors duration-200 hover:text-zinc-100 hover:decoration-accent"
+              className="mt-10 inline-block font-mono text-xs text-text-2 underline decoration-border-strong underline-offset-4 transition-colors duration-200 hover:text-text-1 hover:decoration-accent"
             >
               [ read the resume → ]
             </a>
