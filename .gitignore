@@ -33,3 +33,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .vercel
+
+# visual-analysis scratch (local screenshots / playwright sessions)
+/.playwright-mcp/
+/analysis-*.png
+/visual-*.png
+
