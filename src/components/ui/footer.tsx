@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { KonamiHint } from "./konami-panel";
 
 export function Footer() {
   const [views, setViews] = useState<number | null>(null);
@@ -30,15 +29,15 @@ export function Footer() {
   }, []);
 
   return (
-    <footer className="relative w-full border-t border-zinc-800 py-12 pb-32">
+    <footer className="relative w-full border-t border-border py-12">
       <div className="mx-auto max-w-[1100px] px-6 lg:px-8 text-center">
-        <p className="font-mono text-[11px] text-zinc-500">
-          Built and shipped in public by Tanmay Mangal. © 2026.
+        <p className="font-mono text-[11px] text-text-3">
+          Tanmay Mangal · VIT Bhopal · 2026
         </p>
-        <div className="mt-4 flex items-center justify-center gap-3 font-mono text-[10px] text-zinc-500">
+        <div className="mt-4 flex items-center justify-center gap-3 font-mono text-[10px] text-text-3">
           <a
             href="#top"
-            className="text-zinc-400 transition-colors duration-200 hover:text-zinc-100"
+            className="text-text-2 transition-colors duration-200 hover:text-text-1"
           >
             ↑ back to top
           </a>
@@ -48,7 +47,6 @@ export function Footer() {
               <span>{views.toLocaleString()} views this month</span>
             </>
           )}
-          <KonamiHint />
         </div>
       </div>
     </footer>

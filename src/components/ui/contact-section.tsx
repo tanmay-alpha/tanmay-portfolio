@@ -49,6 +49,7 @@ export function ContactSection() {
   const [errorMsg, setErrorMsg] = useState("");
   const [toastVisible, setToastVisible] = useState(false);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sectionRef = useRef<HTMLElement>(null);
 
   const showCopyToast = () => {
     setToastVisible(true);
@@ -56,11 +57,32 @@ export function ContactSection() {
     toastTimerRef.current = setTimeout(() => setToastVisible(false), 1500);
   };
 
-  // Clean up the timer on unmount.
   useEffect(() => {
     return () => {
       if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     };
+  }, []);
+
+  // Reveal animation for the section.
+  useEffect(() => {
+    const root = sectionRef.current;
+    if (!root) return;
+    const targets = Array.from(root.querySelectorAll<HTMLElement>("[data-reveal]"));
+    targets.forEach((el) => el.classList.add("reveal"));
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: "0px 0px -40px 0px" },
+    );
+    targets.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -85,7 +107,6 @@ export function ContactSection() {
         return;
       }
 
-      // 503 = env vars not set — fall back to mailto.
       if (res.status === 503 && data.fallbackMailto) {
         window.location.href = buildMailto(name, email, message);
         setStatus("error");
@@ -104,46 +125,45 @@ export function ContactSection() {
 
   return (
     <section
+      ref={sectionRef}
       id="contact"
-      className="relative w-full border-t border-zinc-800 py-24 md:py-32"
+      className="relative w-full border-t border-border py-24 md:py-32"
     >
       <div className="mx-auto max-w-[1100px] px-6 lg:px-8">
         <div className="grid-12 gap-y-12">
-          <div className="col-span-12 md:col-span-5">
-            <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-400">
-              Contact
-            </span>
+          <div data-reveal className="col-span-12 md:col-span-5">
+            <span className="eyebrow">Contact</span>
             <motion.h2
               initial={{ opacity: 0, y: 12 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.4 }}
               transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              className="mt-4 font-serif italic text-display-lg font-light text-paper"
+              className="section-heading mt-3"
             >
-              Say hi<span className="text-accent">.</span>
+              Get in touch
             </motion.h2>
-            <p className="mt-6 max-w-md text-base leading-relaxed text-zinc-300 md:text-lg">
+            <p className="mt-6 max-w-md text-[15px] leading-[1.75] text-text-2">
               Reach me at{" "}
               <a
                 href={`mailto:${CONTACT_EMAIL}`}
-                className="text-paper underline decoration-zinc-700 underline-offset-4 transition-colors duration-200 hover:decoration-accent"
+                className="text-text-1 underline decoration-border-strong underline-offset-4 transition-colors duration-200 hover:decoration-accent"
               >
                 {CONTACT_EMAIL}
               </a>{" "}
               — or use the form below. I reply within 24 hours.
             </p>
             <a
-              href={buildLinkedInHref()}
+              href="https://www.linkedin.com/in/tanmaymangal"
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-8 inline-block font-mono text-xs text-zinc-300 underline decoration-zinc-700 underline-offset-4 transition-colors duration-200 hover:text-zinc-100 hover:decoration-accent"
+              className="mt-8 inline-block font-mono text-xs text-text-2 underline decoration-border-strong underline-offset-4 transition-colors duration-200 hover:text-text-1 hover:decoration-accent"
             >
               Or message on LinkedIn →
             </a>
           </div>
 
           {/* Form */}
-          <div className="col-span-12 md:col-span-7">
+          <div data-reveal className="col-span-12 md:col-span-7">
             <form onSubmit={handleSubmit} className="space-y-6" noValidate>
               {/* Honeypot — hidden from humans, visible to dumb bots. */}
               <div
@@ -197,28 +217,33 @@ export function ContactSection() {
                 <button
                   type="submit"
                   disabled={status === "sending"}
-                  className="rounded-md border border-accent bg-transparent px-5 py-2.5 font-mono text-xs uppercase tracking-widest text-accent transition-colors duration-200 hover:bg-accent hover:text-bg disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-submit"
                 >
-                  {status === "sending" ? "Sending..." : status === "sent" ? "Sent." : "Send"}
+                  {status === "sending"
+                    ? "Sending…"
+                    : status === "sent"
+                      ? "Sent ✓"
+                      : "Send"}
                 </button>
                 {status === "error" && (
                   <a
                     href={buildMailto(name, email, message)}
-                    className="font-mono text-xs text-zinc-400 underline decoration-zinc-700 underline-offset-4 transition-colors duration-200 hover:text-zinc-100 hover:decoration-accent"
+                    className="font-mono text-xs text-text-2 underline decoration-border-strong underline-offset-4 transition-colors duration-200 hover:text-text-1 hover:decoration-accent"
                   >
                     {errorMsg || "Couldn't send. Email me instead."}
                   </a>
                 )}
               </div>
-              <p className="font-sans text-xs text-zinc-500">
-                I get an email at mangaltanmay7@gmail.com when you send. I usually reply within 24 hours.
+              <p className="text-[12px] text-text-3">
+                I get an email at mangaltanmay7@gmail.com when you send. I
+                usually reply within 24 hours.
               </p>
             </form>
           </div>
         </div>
 
         {/* Profile links */}
-        <div className="mt-20 grid-12">
+        <div data-reveal className="mt-20 grid-12">
           <div className="col-span-12 md:col-span-10 md:col-start-3">
             <ul className="flex flex-wrap justify-center gap-x-6 gap-y-6">
               {PROFILE_LINKS.map((link) => (
@@ -226,7 +251,6 @@ export function ContactSection() {
               ))}
             </ul>
             <CopyToast visible={toastVisible} message="Copied ✓" />
-
           </div>
         </div>
       </div>
@@ -251,11 +275,9 @@ function Field({
   textarea?: boolean;
   required?: boolean;
 }) {
-  const baseClass =
-    "mt-1 w-full rounded-md border border-zinc-800 bg-surface px-3 py-2.5 font-sans text-base text-zinc-100 placeholder:text-zinc-600 transition-colors duration-200 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent";
   return (
     <label htmlFor={htmlFor} className="block">
-      <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+      <span className="eyebrow block">
         {label}
         {required && <span className="ml-1 text-accent">*</span>}
       </span>
@@ -267,7 +289,7 @@ function Field({
           onChange={(e) => onChange(e.target.value)}
           required={required}
           rows={5}
-          className={baseClass}
+          className="form-textarea mt-2"
         />
       ) : (
         <input
@@ -277,7 +299,7 @@ function Field({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           required={required}
-          className={baseClass}
+          className="form-input mt-2"
         />
       )}
     </label>
@@ -294,12 +316,6 @@ function buildMailto(name: string, email: string, message: string): string {
       : `Hi Tanmay,\n\n— ${name}${email ? ` <${email}>` : ""}`,
   );
   return `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
-}
-
-function buildLinkedInHref(): string {
-  // LinkedIn's prefill compose URL is gated — fall back to profile if it
-  // doesn't work for the user, the form is the primary path.
-  return "https://www.linkedin.com/in/tanmaymangal";
 }
 
 function ProfileLink({
@@ -320,7 +336,6 @@ function ProfileLink({
       if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(text);
       } else {
-        // Fallback for non-secure contexts / older browsers.
         const ta = document.createElement("textarea");
         ta.value = text;
         ta.style.position = "fixed";
@@ -334,13 +349,10 @@ function ProfileLink({
       onCopy();
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      // Clipboard denied. Fail silently — the chip is still visible.
+      // Clipboard denied.
     }
   };
 
-  // Discord chip: the only special-cased one. Renders a button-styled
-  // chip with the username + a small copy icon. Other links render
-  // the standard icon+label column.
   if (link.copyOnClick) {
     return (
       <li>
@@ -350,17 +362,17 @@ function ProfileLink({
           aria-label={`Copy ${link.user} to clipboard`}
           className="group flex flex-col items-center gap-2 text-center"
         >
-          <span className="flex h-11 items-center gap-2 rounded-md border border-zinc-800 bg-[#111111] px-3 text-zinc-400 transition-colors duration-200 group-hover:border-accent group-hover:text-accent">
+          <span className="flex h-11 items-center gap-2 rounded-md border border-border bg-surface px-3 text-text-2 transition-colors duration-200 group-hover:border-accent group-hover:text-accent">
             {copied ? (
               <Code2 className="h-[14px] w-[14px] text-accent" />
             ) : (
               <Icon className="h-[14px] w-[14px]" />
             )}
-            <span className="font-mono text-[11px] text-zinc-300 group-hover:text-zinc-100">
+            <span className="font-mono text-[11px] text-text-2 group-hover:text-text-1">
               {link.user}
             </span>
           </span>
-          <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-500 transition-colors duration-200 group-hover:text-zinc-300">
+          <span className="eyebrow transition-colors duration-200 group-hover:text-text-2">
             {link.label}
           </span>
         </button>
@@ -376,13 +388,13 @@ function ProfileLink({
         rel="noopener noreferrer"
         className="group flex flex-col items-center gap-2 text-center"
       >
-        <span className="flex h-11 w-11 items-center justify-center rounded-md border border-zinc-800 text-zinc-400 transition-colors duration-200 group-hover:border-accent group-hover:text-accent">
+        <span className="flex h-11 w-11 items-center justify-center rounded-md border border-border text-text-2 transition-colors duration-200 group-hover:border-accent group-hover:text-accent">
           <Icon className="h-[18px] w-[18px]" />
         </span>
-        <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-500 transition-colors duration-200 group-hover:text-zinc-300">
+        <span className="eyebrow transition-colors duration-200 group-hover:text-text-2">
           {link.label}
         </span>
-        <span className="font-mono text-[10px] text-zinc-500">
+        <span className="font-mono text-[10px] text-text-3">
           {link.user}
         </span>
       </a>
@@ -395,7 +407,7 @@ function CopyToast({ visible, message }: { visible: boolean; message: string }) 
     <div
       aria-live="polite"
       aria-atomic
-      className={`pointer-events-none fixed bottom-6 right-6 z-50 rounded-md border border-zinc-800 bg-[#111111] px-4 py-2 font-mono text-xs text-zinc-100 transition-all duration-200 ${
+      className={`pointer-events-none fixed bottom-6 right-6 z-50 rounded-md border border-border bg-surface px-4 py-2 font-mono text-xs text-text-1 transition-all duration-200 ${
         visible ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
       }`}
     >
