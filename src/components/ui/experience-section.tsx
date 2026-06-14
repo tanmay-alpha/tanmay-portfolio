@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useEffect, useRef } from "react";
 
 type Experience = {
   company: string;
@@ -59,18 +60,39 @@ const EXPERIENCE: ReadonlyArray<Experience> = [
 ];
 
 export function ExperienceSection() {
+  const sectionRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const root = sectionRef.current;
+    if (!root) return;
+    const targets = Array.from(root.querySelectorAll<HTMLElement>("[data-reveal]"));
+    targets.forEach((el) => el.classList.add("reveal"));
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: "0px 0px -40px 0px" },
+    );
+    targets.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <section
+      ref={sectionRef}
       id="experience"
-      className="relative w-full border-t border-white/[0.06] py-24 md:py-32 lg:py-40"
+      className="relative w-full border-t border-border py-24 md:py-32 lg:py-40"
     >
       <div className="mx-auto max-w-[1100px] px-6 lg:px-8">
-        {/* Section header */}
-        <div className="grid-12 mb-16 md:mb-20">
-          <div className="col-span-12 md:col-span-2">
-            <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-400">
-              Experience
-            </span>
+        <div className="grid-12 mb-12 gap-y-8 md:mb-16">
+          <div className="col-span-12 md:col-span-2 flex flex-col gap-3">
+            <span className="eyebrow">Where I&apos;ve worked</span>
           </div>
           <div className="col-span-12 md:col-span-10">
             <motion.h2
@@ -78,75 +100,48 @@ export function ExperienceSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.4 }}
               transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              className="font-serif italic text-display-md font-light text-paper"
+              className="section-heading"
             >
-              Path.
+              Experience
             </motion.h2>
           </div>
         </div>
 
-        {/* Timeline */}
         <div className="grid-12">
           <div className="col-span-12 md:col-span-10 md:col-start-3">
-            <ol className="relative space-y-12">
-              {/* Vertical line */}
-              <span
-                aria-hidden
-                className="absolute left-0 top-2 bottom-2 w-px bg-zinc-800"
-              />
-              {EXPERIENCE.map((entry, i) => (
-                <motion.li
+            <ol className="experience-list">
+              {EXPERIENCE.map((entry) => (
+                <li
                   key={entry.company}
-                  initial={{ opacity: 0, y: 16 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.2 }}
-                  transition={{
-                    duration: 0.4,
-                    delay: i * 0.05,
-                    ease: [0.16, 1, 0.3, 1],
-                  }}
-                  className="relative pl-8"
+                  data-reveal
+                  className="experience-item"
                 >
-                  {/* Dot */}
-                  <span
-                    aria-hidden
-                    className="absolute left-0 top-2 -translate-x-1/2 h-2 w-2 rounded-full bg-zinc-700 ring-4 ring-bg"
-                  />
-                  <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
-                    <div>
-                      <h3 className="text-lg font-medium text-zinc-100">
-                        {entry.company}
-                      </h3>
-                      <p className="text-sm italic text-zinc-400">{entry.role}</p>
-                    </div>
-                    <span className="font-mono text-[11px] text-zinc-500">
-                      {entry.dates}
-                    </span>
-                  </div>
-                  <ul className="mt-3 space-y-1.5 text-sm leading-relaxed text-zinc-300">
+                  <h3 className="experience-company">{entry.company}</h3>
+                  <p className="experience-role">{entry.role}</p>
+                  <p className="experience-date">{entry.dates}</p>
+                  <ul className="experience-bullets">
                     {entry.bullets.map((b) => (
-                      <li key={b} className="flex gap-2">
-                        <span aria-hidden className="text-zinc-600 shrink-0">·</span>
-                        <span>{b}</span>
-                      </li>
+                      <li key={b}>{b}</li>
                     ))}
                   </ul>
-                </motion.li>
+                </li>
               ))}
             </ol>
-            <div className="mt-16 border-t border-white/[0.06] pt-8">
-              <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-                Working toward
-              </p>
-              <p className="mt-3 max-w-2xl font-sans text-sm leading-relaxed text-paper">
-                An AI/ML or full-stack role at a company where the engineering moves money or moves people. I&apos;m strongest when the work has real consequences — backtests that risk real P&amp;L, fraud systems that block real attacks, products real users depend on.
+
+            <div data-reveal className="mt-16 border-t border-border pt-8">
+              <p className="eyebrow">Working toward</p>
+              <p className="mt-3 max-w-2xl text-[14px] leading-[1.7] text-text-1">
+                An AI/ML or full-stack role at a company where the engineering
+                moves money or moves people. I&apos;m strongest when the work
+                has real consequences — backtests that risk real P&amp;L, fraud
+                systems that block real attacks, products real users depend on.
               </p>
             </div>
 
-            <div className="mt-12">
+            <div className="mt-10">
               <a
                 href="/resume.pdf"
-                className="font-mono text-xs text-zinc-300 underline decoration-zinc-700 underline-offset-4 transition-colors duration-200 hover:text-zinc-100 hover:decoration-accent"
+                className="font-mono text-xs text-text-2 underline decoration-border-strong underline-offset-4 transition-colors duration-200 hover:text-text-1 hover:decoration-accent"
               >
                 [ show full resume → ]
               </a>
