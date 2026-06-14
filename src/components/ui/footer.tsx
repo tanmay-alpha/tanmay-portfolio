@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { KonamiHint } from "./konami-panel";
 
 export function Footer() {
   const [views, setViews] = useState<number | null>(null);
@@ -47,6 +48,7 @@ export function Footer() {
               <span>{views.toLocaleString()} views this month</span>
             </>
           )}
+          <KonamiHint />
         </div>
       </div>
     </footer>
