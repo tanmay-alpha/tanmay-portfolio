@@ -55,11 +55,28 @@ async function fetchCommits(): Promise<FeedState> {
 export function CommitFeedSidebar() {
   const [feed, setFeed] = useState<FeedState>({ status: "loading", commits: [], fetchedAt: null });
   const [open, setOpen] = useState(false);
+  const [heroInView, setHeroInView] = useState(true);
   const reduced = useReducedMotion();
   const { scrollY } = useScroll();
   // Subtle parallax: lifts up as the user scrolls, so the feed never
   // visually overlaps section content.
   const y = useTransform(scrollY, [0, 800], [0, reduced ? 0 : -24]);
+
+  // Watch the hero — hide the sidebar whenever the hero occupies the
+  // viewport so it never sits on top of the photo.
+  useEffect(() => {
+    const hero = document.getElementById("top");
+    if (!hero) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry) setHeroInView(entry.isIntersecting);
+      },
+      { threshold: 0.05 }
+    );
+    obs.observe(hero);
+    return () => obs.disconnect();
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -79,7 +96,7 @@ export function CommitFeedSidebar() {
     <motion.aside
       aria-label="Live GitHub commit feed"
       className="pointer-events-none fixed right-0 top-1/2 z-30 hidden -translate-y-1/2 lg:block"
-      style={{ y }}
+      style={{ y, opacity: heroInView ? 0 : 1 }}
     >
       <div
         className="pointer-events-auto w-[260px] rounded-l-md border-l border-white/5 p-4 backdrop-blur-md"

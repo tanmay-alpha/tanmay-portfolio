@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import nowData from "@/data/now.json";
 import { relativeTime } from "./commit-feed";
@@ -11,11 +11,28 @@ export function NowSidebar() {
   const { scrollY } = useScroll();
   const y = useTransform(scrollY, [0, 800], [0, reduced ? 0 : -20]);
   const [hoverDot, setHoverDot] = useState(false);
+  const [heroInView, setHeroInView] = useState(true);
+
+  // Hide while the hero occupies the viewport so the sidebar never
+  // overlaps the name/role/photo.
+  useEffect(() => {
+    const hero = document.getElementById("top");
+    if (!hero) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry) setHeroInView(entry.isIntersecting);
+      },
+      { threshold: 0.05 }
+    );
+    obs.observe(hero);
+    return () => obs.disconnect();
+  }, []);
 
   return (
     <motion.aside
       aria-label="What I'm working on now"
-      style={{ y }}
+      style={{ y, opacity: heroInView ? 0 : 1 }}
       className="pointer-events-none fixed left-0 top-1/2 z-30 hidden w-[220px] -translate-y-1/2 lg:block"
     >
       <div className="pointer-events-auto ml-6 border-l border-white/[0.06] pl-4">
