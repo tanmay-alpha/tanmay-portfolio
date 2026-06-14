@@ -12,7 +12,7 @@ type Project = {
   bullets: ReadonlyArray<string>;
   stack: ReadonlyArray<string>;
   github: string;
-  live: { label: string; href: string };
+  live?: { label: string; href: string };
   Mockup: React.ComponentType;
 };
 
@@ -30,7 +30,6 @@ const PROJECTS: ReadonlyArray<Project> = [
     ],
     stack: ["next.js 14", "typescript", "python", "fastapi", "websocket", "pandas"],
     github: "https://github.com/tanmay-alpha/maet",
-    live: { label: "live", href: "#" },
     Mockup: MaetMockup,
   },
   {
@@ -46,7 +45,6 @@ const PROJECTS: ReadonlyArray<Project> = [
     ],
     stack: ["python", "fastapi", "next.js", "typescript", "groq (llama 3.3 70b)", "ocr", "opencv"],
     github: "https://github.com/tanmay-alpha/lumint",
-    live: { label: "live", href: "#" },
     Mockup: LumintMockup,
   },
   {
@@ -161,14 +159,16 @@ function ProjectSpread({ project, index }: { project: Project; index: number }) 
           >
             [ github → ]
           </a>
-          <a
-            href={project.live.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline decoration-zinc-700 underline-offset-4 transition-colors duration-200 hover:text-zinc-100 hover:decoration-accent"
-          >
-            [ {project.live.label} → ]
-          </a>
+          {project.live && (
+            <a
+              href={project.live.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline decoration-zinc-700 underline-offset-4 transition-colors duration-200 hover:text-zinc-100 hover:decoration-accent"
+            >
+              [ {project.live.label} → ]
+            </a>
+          )}
         </div>
       </div>
 
