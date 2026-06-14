@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     template: "%s — Tanmay Mangal",
   },
   description:
-    "Tanmay Mangal — 2nd-year CSE student at VIT Bhopal. Building at the intersection of ML, financial systems, and full-stack engineering.",
+    "Tanmay Mangal — B.Tech CSE at VIT Bhopal. Building at the intersection of ML, financial systems, and full-stack engineering.",
   keywords: [
     "Tanmay Mangal",
     "VIT Bhopal",
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
     siteName: "Tanmay Mangal",
     title: "Tanmay Mangal",
     description:
-      "Tanmay Mangal — 2nd-year CSE student at VIT Bhopal. Building at the intersection of ML, financial systems, and full-stack engineering.",
+      "Tanmay Mangal — B.Tech CSE at VIT Bhopal. Building at the intersection of ML, financial systems, and full-stack engineering.",
     images: [
       {
         url: "/opengraph-image",
@@ -60,7 +60,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Tanmay Mangal",
     description:
-      "Tanmay Mangal — 2nd-year CSE student at VIT Bhopal. Building at the intersection of ML, financial systems, and full-stack engineering.",
+      "Tanmay Mangal — B.Tech CSE at VIT Bhopal. Building at the intersection of ML, financial systems, and full-stack engineering.",
     images: ["/opengraph-image"],
     creator: "@tanmay_alpha",
   },

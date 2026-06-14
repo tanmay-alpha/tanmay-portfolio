@@ -24,9 +24,15 @@ export function AboutSection() {
             className="col-span-12 md:col-span-10"
           >
             <p className="max-w-3xl text-[20px] leading-[1.55] text-text-1 text-balance md:text-[22px]">
-              2nd-year Computer Science &amp; Engineering student at VIT Bhopal —
-              interested in the intersection of markets, machine learning, and
-              systems that move money.
+              I&apos;m Tanmay — B.Tech CSE at VIT Bhopal, building trading
+              systems and AI tools. My work sits at the intersection of
+              full-stack engineering, machine learning, and quant thinking —
+              MAET is a real-time NSE terminal I built to scratch my own itch,
+              Lumint is an AI fraud platform from a hackathon, and FinCalc is
+              what happens when a bored engineer turns Indian income tax law
+              into a weekend project. I trade on Zerodha, ship in public, and
+              I&apos;m always open to AI/ML or full-stack roles that actually
+              move money.
             </p>
 
             <p className="mt-6 max-w-2xl text-[15px] leading-[1.75] text-text-2 text-pretty md:text-base">
