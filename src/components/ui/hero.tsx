@@ -88,7 +88,7 @@ export function Hero() {
             >
               <a
                 href="#contact"
-                className="open-to-callout inline-flex items-center gap-2 mt-6 text-zinc-300 hover:text-bone transition-colors"
+                className="open-to-callout inline-flex items-center gap-2 mt-6 text-text-2 hover:text-text-1 transition-colors"
               >
                 <span className="w-2 h-2 rounded-full bg-[#4ADE80]" aria-hidden />
                 <span className="text-[14px]">Open to AI/ML or full-stack roles @ fintech, trading, YC-stage.</span>
