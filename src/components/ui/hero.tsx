@@ -58,11 +58,11 @@ export function Hero() {
         <AuroraOrb />
       </motion.div>
 
-      <div className="relative z-10 mx-auto max-w-[1100px] px-6 lg:px-8">
-        <div className="grid grid-cols-1 items-center gap-10 py-20 md:grid-cols-12 md:gap-12 md:py-28 lg:py-32">
+      <div className="relative z-10 mx-auto max-w-[1200px] px-6 lg:px-8">
+        <div className="grid grid-cols-1 items-center gap-10 py-20 md:grid-cols-12 md:gap-12 md:py-28 lg:grid-cols-[1fr_440px] lg:gap-16 lg:py-32">
           {/* Text block: cols 1-7. Wrapped in motion.p for parallax. */}
           <motion.div
-            className="md:col-span-7"
+            className="md:col-span-7 lg:col-span-1"
             style={reduced ? undefined : { y: textY }}
           >
             <motion.p className="hero-eyebrow" {...fadeUp(FADE_UP_STAGGER.eyebrow)}>
@@ -117,18 +117,18 @@ export function Hero() {
             </motion.div>
           </motion.div>
 
-          {/* Portrait: cols 9-12, parallax at a different rate. */}
+          {/* Portrait: widened column on lg+ (440px), 360px on md, 240px on mobile. */}
           <motion.div
-            className="hero-portrait md:col-span-5 md:col-start-9 flex justify-center md:justify-end"
+            className="hero-portrait md:col-span-5 md:col-start-9 lg:col-span-1 lg:col-start-auto flex justify-center md:justify-end"
             style={reduced ? undefined : { y: portraitY }}
             {...fadeUp(FADE_UP_STAGGER.portrait)}
           >
-            <div className="relative aspect-square w-[220px] overflow-hidden rounded-full border border-border-strong bg-surface md:w-[260px]">
+            <div className="relative aspect-square w-[240px] overflow-hidden rounded-full border border-border-strong bg-surface md:w-[360px] lg:w-[440px]">
               <Image
                 src="/tanmay.jpg"
                 alt="Tanmay Mangal — portrait"
-                width={520}
-                height={520}
+                width={880}
+                height={880}
                 priority
                 quality={95}
                 className="h-full w-full object-cover"
