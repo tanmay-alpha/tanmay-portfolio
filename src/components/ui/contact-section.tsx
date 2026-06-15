@@ -397,7 +397,7 @@ function ProfileLink({
         target="_blank"
         rel="noopener noreferrer"
         title={link.user}
-        aria-label={`${link.label} — ${link.user}`}
+        aria-label={link.label}
         className="group flex flex-col items-center gap-2 text-center"
       >
         <span className="flex h-11 w-11 items-center justify-center rounded-md border border-border text-text-2 transition-colors duration-200 group-hover:border-accent group-hover:text-accent">
