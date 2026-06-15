@@ -20,6 +20,12 @@
   --accent-dim:    rgba(232, 184, 75, 0.12);
   --accent-glow:   rgba(232, 184, 75, 0.05);
 
+  /* Secondary accent — rust/copper. Used for the (live) indicator and
+     the "primary" stack-proficiency dot so the two warm tones feel like
+     a deliberate system, not an accident. */
+  --rust:          #D97757;
+  --rust-dim:      rgba(217, 119, 87, 0.18);
+
   /* Text hierarchy */
   --text-1:        #F0F2F8;
   --text-2:        #8892A4;

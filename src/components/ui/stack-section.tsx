@@ -70,11 +70,14 @@ const GROUPS: ReadonlyArray<Group> = [
 ];
 
 function Dot({ level }: { level: Level }) {
+  // 6px filled circles — three intensities of warm-to-cool so the eye
+  // can group tags by proficiency at a glance. primary = rust (brand
+  // accent), working = secondary text, familiar = dim grey.
   if (level === "primary") {
     return (
       <span
         aria-hidden
-        className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-accent"
+        className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-rust"
       />
     );
   }
@@ -82,14 +85,14 @@ function Dot({ level }: { level: Level }) {
     return (
       <span
         aria-hidden
-        className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full border border-text-1"
+        className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-text-2"
       />
     );
   }
   return (
     <span
       aria-hidden
-      className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full border border-text-3"
+      className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-text-3"
     />
   );
 }
@@ -141,16 +144,16 @@ export function StackSection() {
               What I work with.
             </motion.h2>
             <p className="mt-4 max-w-2xl text-[13px] text-text-3">
-              <span className="mr-3 inline-flex items-center">
-                <span aria-hidden className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-accent" />
+              <span className="mr-4 inline-flex items-center">
+                <span aria-hidden className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-rust" />
                 primary
               </span>
-              <span className="mr-3 inline-flex items-center">
-                <span aria-hidden className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full border border-text-1" />
+              <span className="mr-4 inline-flex items-center">
+                <span aria-hidden className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-text-2" />
                 working
               </span>
               <span className="inline-flex items-center">
-                <span aria-hidden className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full border border-text-3" />
+                <span aria-hidden className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-text-3" />
                 familiar
               </span>
             </p>
