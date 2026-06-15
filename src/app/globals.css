@@ -185,9 +185,9 @@ body::after {
     left: 0;
     right: 0;
     z-index: 100;
-    /* Never transform/translate the nav. The position is fixed and
-       pixel-locked; only background/border/backdrop transition so the
-       scrolled-state change is smooth, never a layout shift. */
+    /* Reserve 1px for the border-bottom on BOTH states so toggling
+       .nav-scrolled never changes the nav's height or position. */
+    border-bottom: 1px solid transparent;
     transform: none;
     transition: background 0.3s, border-color 0.3s, backdrop-filter 0.3s;
   }
@@ -196,7 +196,7 @@ body::after {
     background: var(--nav-scrim);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid var(--border);
+    border-bottom-color: var(--border);
   }
 
   .nav-link {
