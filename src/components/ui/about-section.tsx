@@ -107,9 +107,8 @@ export function AboutSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
-          className="mt-20 grid grid-cols-2 gap-y-10 md:grid-cols-4 md:gap-y-0"
+          className="mt-20 grid grid-cols-2 gap-y-10 md:grid-cols-3 md:gap-y-0"
         >
-          <StatTile value="8.49" label="CGPA / 10" suffix="" />
           <StatTile value="6" label="Public repos" suffix="" />
           <StatTile value="600+" label="Tests written" suffix="" />
           <StatTile

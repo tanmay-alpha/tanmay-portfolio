@@ -72,8 +72,7 @@ export function EducationSection() {
               </h3>
 
               <p className="mt-2 text-[14px] text-text-2">
-                B.Tech Computer Science &amp; Engineering · 2024 – 2028 ·
-                CGPA 8.49 / 10
+                B.Tech Computer Science &amp; Engineering · 2024 – 2028
               </p>
 
               <p
