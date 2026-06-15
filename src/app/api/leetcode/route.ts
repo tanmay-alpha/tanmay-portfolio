@@ -1,11 +1,40 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
+import { createRateLimiter, getClientIp } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const LEETCODE_URL = "https://alfa-leetcode-api.onrender.com/tanmay-alpha/solved";
 
-export async function GET() {
+// The upstream LeetCode proxy is a free Render service — it has its own
+// rate limits and slow cold starts. Cap our per-IP request rate to
+// prevent one misbehaving client from monopolising the proxy and to
+// shield us from request-flood attacks.
+const lcLimiter = createRateLimiter({ max: 10, windowMs: 60_000 });
+
+export async function GET(req: NextRequest) {
+  const limit = lcLimiter(getClientIp(req));
+  if (!limit.ok) {
+    return NextResponse.json(
+      {
+        totalSolved: null,
+        easySolved: null,
+        mediumSolved: null,
+        hardSolved: null,
+        ranking: null,
+        fetchedAt: new Date().toISOString(),
+        fallback: true,
+      },
+      {
+        status: 429,
+        headers: { "Retry-After": String(limit.retryAfterSec) },
+      },
+    );
+  }
+  return getLeetcode();
+}
+
+async function getLeetcode() {
   const fallbackPayload = {
     totalSolved: null as number | null,
     easySolved: null as number | null,

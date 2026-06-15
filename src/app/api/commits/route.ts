@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { createRateLimiter, getClientIp } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,6 +14,11 @@ const REVALIDATE_EVENTS = 300;
 const REVALIDATE_REPOS = 600;
 const REVALIDATE_COMMITS = 300;
 const REVALIDATE_STATS = 3600;
+
+// Per-IP rate limit. The data behind this endpoint is public, but the
+// route also acts as a proxy to GitHub's unauthenticated 60 req/hr
+// rate limit, so we cap clients BEFORE we burn our shared budget.
+const commitLimiter = createRateLimiter({ max: 30, windowMs: 60_000 });
 
 const GH_HEADERS: HeadersInit = {
   Accept: "application/vnd.github+json",
@@ -134,6 +140,16 @@ export type StatsResponse = {
 };
 
 export async function GET(req: NextRequest) {
+  const limit = commitLimiter(getClientIp(req));
+  if (!limit.ok) {
+    return NextResponse.json(
+      { ok: false, error: "Too many requests" },
+      {
+        status: 429,
+        headers: { "Retry-After": String(limit.retryAfterSec) },
+      },
+    );
+  }
   const wantStats = req.nextUrl.searchParams.get("stats") === "1";
   if (wantStats) return getStats();
   return getCommits();
