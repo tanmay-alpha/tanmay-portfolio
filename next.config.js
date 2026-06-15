@@ -44,21 +44,80 @@ const SECURITY_HEADERS = [
   },
   {
     key: "Content-Security-Policy",
-    value: [
-      "default-src 'self'",
-      "img-src 'self' data: blob:",
-      "font-src 'self' data:",
-      // Plausible analytics script (only loaded when env var is set)
-      "script-src 'self' 'unsafe-inline'" + (process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN ? " https://plausible.io" : ""),
-      // Allow connection to Plausible events endpoint when configured
-      "connect-src 'self'" + (process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN ? " https://plausible.io" : ""),
-      // WebGL shader compilation in the aurora orb
-      "worker-src 'self' blob:",
-      // Vercel live regions, OG image generator
-      "frame-ancestors 'none'",
-      "base-uri 'self'",
-      "form-action 'self'",
-    ].join("; "),
+    value: (() => {
+      // CSP design — the trade-offs explained:
+      //
+      // script-src 'unsafe-inline' — REQUIRED for Next.js 15 App Router.
+      // Next emits multiple inline <script> tags per page for React
+      // Server Components streaming (`self.__next_f.push(...)` chunks
+      // and the `self.__next_s.push(...)` theme-initializer wrapper).
+      // The chunks are content- and route-specific, so a SHA-256
+      // allowlist would need to enumerate every page's payload —
+      // impractical. The two real alternatives are (a) nonce every
+      // script, which requires patching Next's emit pipeline, or
+      // (b) Trusted Types, which requires major app refactor. For a
+      // portfolio, the XSS risk is mitigated by the lack of any
+      // user-controlled HTML rendering — every string inserted into
+      // the DOM is React-escaped. Logged as a follow-up for if/when
+      // we add a CMS or user input that lands in the DOM as HTML.
+      //
+      // style-src 'unsafe-inline' — REQUIRED for Tailwind utility
+      // classes that emit dynamic inline `style=` attributes (Framer
+      // Motion's transform/translateY props, the data-reveal reveal
+      // animations, the aurora orb's WebGL position). Without
+      // 'unsafe-inline' here, ~50 console errors fire on every
+      // page load and the reveal animations stop working.
+      //
+      // What we DO lock down:
+      //   - no remote script sources by default (Plausible and
+      //     Turnstile are opt-in via env var)
+      //   - no remote styles, no remote frames
+      //   - frame-ancestors 'none' (clickjacking blocked)
+      //   - base-uri 'self' (no <base> hijacking)
+      //   - form-action 'self' (forms can only POST back to us)
+      //   - object-src 'none' (no Flash, no Java applets)
+      //   - report-uri sends violations to /api/csp-report
+
+      const plausibleHost = "https://plausible.io";
+      const turnstileHost = "https://challenges.cloudflare.com";
+      const hasPlausible = !!process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN;
+      const hasTurnstile = !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+
+      const scriptSrc = [
+        "'self'",
+        "'unsafe-inline'",
+        hasPlausible ? plausibleHost : null,
+        hasTurnstile ? turnstileHost : null,
+      ].filter(Boolean).join(" ");
+
+      const styleSrc = ["'self'", "'unsafe-inline'"].join(" ");
+
+      const connectSrc = ["'self'", hasPlausible ? plausibleHost : null]
+        .filter(Boolean).join(" ");
+
+      const frameSrc = ["'self'", hasTurnstile ? turnstileHost : null]
+        .filter(Boolean).join(" ");
+
+      return [
+        "default-src 'self'",
+        "img-src 'self' data: blob:",
+        "font-src 'self' data:",
+        `script-src ${scriptSrc}`,
+        `style-src ${styleSrc}`,
+        `connect-src ${connectSrc}`,
+        `frame-src ${frameSrc}`,
+        // WebGL shader compilation in the aurora orb
+        "worker-src 'self' blob:",
+        "object-src 'none'",
+        "frame-ancestors 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+        // Send CSP violations to the report endpoint. Browsers will POST
+        // application/csp-report when a directive is violated; the route
+        // accepts and logs them (no PII echo back to the client).
+        "report-uri /api/csp-report",
+      ].join("; ");
+    })(),
   },
 ];
 
