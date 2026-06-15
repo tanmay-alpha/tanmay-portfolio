@@ -1,8 +1,52 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
+type LeetCodeResponse = {
+  totalSolved: number | null;
+  easySolved: number | null;
+  mediumSolved: number | null;
+  hardSolved: number | null;
+  ranking: number | null;
+  fetchedAt: string;
+  fallback: boolean;
+};
+
+const HARDCODED_FALLBACK = "100+";
+
 export function AboutSection() {
+  const [lc, setLc] = useState<LeetCodeResponse | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/leetcode")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: LeetCodeResponse | null) => {
+        if (cancelled) return;
+        if (data) setLc(data);
+      })
+      .catch(() => {
+        if (!cancelled) setLc({
+          totalSolved: null,
+          easySolved: null,
+          mediumSolved: null,
+          hardSolved: null,
+          ranking: null,
+          fetchedAt: new Date().toISOString(),
+          fallback: true,
+        });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const leetCodeDisplay =
+    lc?.totalSolved !== null && lc?.totalSolved !== undefined
+      ? lc.totalSolved.toString()
+      : HARDCODED_FALLBACK;
+
   return (
     <section
       id="about"
@@ -10,12 +54,10 @@ export function AboutSection() {
     >
       <div className="mx-auto max-w-[1100px] px-6 lg:px-8">
         <div className="grid-12 gap-y-12">
-          {/* Left col: section label */}
           <div className="col-span-12 md:col-span-2 flex flex-col gap-6">
             <span className="eyebrow">About</span>
           </div>
 
-          {/* Right col: body */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -50,7 +92,6 @@ export function AboutSection() {
               better engineer.
             </p>
 
-            {/* Resume link */}
             <a
               href="/resume.pdf"
               className="mt-10 inline-block font-mono text-xs text-text-2 underline decoration-border-strong underline-offset-4 transition-colors duration-200 hover:text-text-1 hover:decoration-accent"
@@ -59,7 +100,76 @@ export function AboutSection() {
             </a>
           </motion.div>
         </div>
+
+        {/* Stats grid */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+          className="mt-20 grid grid-cols-2 gap-y-10 md:grid-cols-4 md:gap-y-0"
+        >
+          <StatTile value="8.49" label="CGPA / 10" suffix="" />
+          <StatTile value="6" label="Public repos" suffix="" />
+          <StatTile value="600+" label="Tests written" suffix="" />
+          <StatTile
+            value={leetCodeDisplay}
+            label="LeetCode solved"
+            breakdown={
+              lc &&
+              !lc.fallback &&
+              lc.easySolved !== null &&
+              lc.mediumSolved !== null &&
+              lc.hardSolved !== null
+                ? `E:M:H = ${lc.easySolved}:${lc.mediumSolved}:${lc.hardSolved}`
+                : null
+            }
+          />
+        </motion.div>
       </div>
     </section>
+  );
+}
+
+function StatTile({
+  value,
+  label,
+  breakdown,
+}: {
+  value: string;
+  label: string;
+  suffix?: string;
+  breakdown?: string | null;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <span
+        className="text-text-1"
+        style={{
+          fontFamily: "var(--font-fraunces), ui-serif, Georgia, serif",
+          fontStyle: "italic",
+          fontWeight: 300,
+          fontSize: "56px",
+          lineHeight: 1,
+          letterSpacing: "-0.02em",
+        }}
+      >
+        {value}
+      </span>
+      <span
+        className="font-mono uppercase text-text-3"
+        style={{ fontSize: "10px", letterSpacing: "0.18em" }}
+      >
+        {label}
+      </span>
+      {breakdown && (
+        <span
+          className="text-text-3"
+          style={{ fontSize: "12px", fontFamily: "var(--font-inter-tight), system-ui, sans-serif" }}
+        >
+          {breakdown}
+        </span>
+      )}
+    </div>
   );
 }

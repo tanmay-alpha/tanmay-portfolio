@@ -1,5 +1,6 @@
 import { Hero } from "@/components/ui/hero";
 import { AboutSection } from "@/components/ui/about-section";
+import { EducationSection } from "@/components/ui/education-section";
 import { NowSection } from "@/components/ui/now-section";
 import { WorkSection } from "@/components/ui/work-section";
 import { MoreWorkSection } from "@/components/ui/more-work-section";
@@ -14,7 +15,7 @@ export default function Home() {
     <main className="relative">
       <Hero />
       <AboutSection />
-      <NowSection />
+      <EducationSection />
       <MidPageRail>
         <WorkSection />
         <MoreWorkSection />
@@ -22,6 +23,7 @@ export default function Home() {
       </MidPageRail>
       <StackSection />
       <ContactSection />
+      <NowSection />
       <Footer />
     </main>
   );

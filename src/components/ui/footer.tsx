@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { LastUpdated } from "@/components/ui/last-updated";
 
 export function Footer() {
   const [views, setViews] = useState<number | null>(null);
@@ -33,6 +34,7 @@ export function Footer() {
       <div className="mx-auto max-w-[1100px] px-6 lg:px-8 text-center">
         <p className="font-mono text-[11px] text-text-3">
           Tanmay Mangal · VIT Bhopal · 2026
+          <LastUpdated />
         </p>
         <div className="mt-4 flex items-center justify-center gap-3 font-mono text-[10px] text-text-3">
           <a

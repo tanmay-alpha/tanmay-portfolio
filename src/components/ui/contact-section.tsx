@@ -368,6 +368,7 @@ function ProfileLink({
         <button
           type="button"
           onClick={handleClick}
+          title={link.user}
           aria-label={`Copy ${link.user} to clipboard`}
           className="group flex flex-col items-center gap-2 text-center"
         >
@@ -395,6 +396,8 @@ function ProfileLink({
         href={link.href}
         target="_blank"
         rel="noopener noreferrer"
+        title={link.user}
+        aria-label={`${link.label} — ${link.user}`}
         className="group flex flex-col items-center gap-2 text-center"
       >
         <span className="flex h-11 w-11 items-center justify-center rounded-md border border-border text-text-2 transition-colors duration-200 group-hover:border-accent group-hover:text-accent">
@@ -402,9 +405,6 @@ function ProfileLink({
         </span>
         <span className="eyebrow transition-colors duration-200 group-hover:text-text-2">
           {link.label}
-        </span>
-        <span className="font-mono text-[10px] text-text-3">
-          {link.user}
         </span>
       </a>
     </li>

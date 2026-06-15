@@ -39,3 +39,9 @@ next-env.d.ts
 /analysis-*.png
 /visual-*.png
 
+# claude code local settings
+/.claude/settings.local.json
+
+# mcp server configs
+/.mcp.json
+
