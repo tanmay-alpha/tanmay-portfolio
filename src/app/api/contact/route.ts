@@ -8,6 +8,12 @@ export const dynamic = "force-dynamic";
 
 // ----- Validation ---------------------------------------------------------
 
+// Max body size for the contact form. The form is name (≤120) + email
+// (≤200) + message (≤5000) + honeypot + JSON wrapping, which is well
+// under 8KB. 32KB is a generous ceiling that still blocks trivial DoS
+// attempts trying to exhaust function memory or Vercel bandwidth.
+const MAX_BODY_BYTES = 32 * 1024;
+
 const ContactSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(120),
   email: z.string().trim().email("Invalid email").max(200),
@@ -20,6 +26,11 @@ const ContactSchema = z.object({
   // so the schema doesn't reject bots with a 400 (which would give away the
   // trap).
   website: z.string().optional().default(""),
+  // Cloudflare Turnstile token. Present only when the widget is
+  // configured; the server skips verification when TURNSTILE_SECRET
+  // is unset (the form works without captcha in that case, but the
+  // honeypot + rate limit + origin check still hold).
+  turnstileToken: z.string().optional(),
 });
 
 // In-memory rate limit. Resets on cold start. For a single-server Vercel
@@ -78,12 +89,31 @@ export async function POST(req: NextRequest) {
   }
 
   let body: unknown;
+  // Reject oversized bodies early, before parsing. Content-Length is
+  // set by the client (spoofable) but Vercel enforces a default
+  // request size limit too; combined, this closes the trivial DoS.
+  const contentLength = Number(req.headers.get("content-length") ?? 0);
+  if (contentLength > MAX_BODY_BYTES) {
+    return NextResponse.json(
+      { ok: false, error: "Request body too large" },
+      { status: 413 },
+    );
+  }
   try {
     body = await req.json();
   } catch {
     return NextResponse.json(
       { ok: false, error: "Invalid JSON body" },
       { status: 400 },
+    );
+  }
+  // Belt-and-suspenders: even if Content-Length was missing or lied,
+  // re-check the parsed body. Serializing back is cheap (<32KB) and
+  // catches a chunked-streamed oversized payload.
+  if (JSON.stringify(body).length > MAX_BODY_BYTES) {
+    return NextResponse.json(
+      { ok: false, error: "Request body too large" },
+      { status: 413 },
     );
   }
 
@@ -118,7 +148,29 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 3) Send via Resend. If env vars aren't set, return 503 — the client
+  // 3) Cloudflare Turnstile (only when configured). The widget is
+  //    rendered by the client; we verify the token server-side. If
+  //    TURNSTILE_SECRET is unset, the form works without captcha (and
+  //    the honeypot + rate limit + origin check still apply).
+  const turnstileSecret = process.env.TURNSTILE_SECRET;
+  if (turnstileSecret) {
+    const token = parsed.data.turnstileToken;
+    if (!token) {
+      return NextResponse.json(
+        { ok: false, error: "Captcha token missing" },
+        { status: 400 },
+      );
+    }
+    const ok = await verifyTurnstile(token, ip, turnstileSecret);
+    if (!ok) {
+      return NextResponse.json(
+        { ok: false, error: "Captcha verification failed" },
+        { status: 403 },
+      );
+    }
+  }
+
+  // 4) Send via Resend. If env vars aren't set, return 503 — the client
   //    falls back to a mailto: link.
   const apiKey = process.env.RESEND_API_KEY;
   const toEmail = process.env.CONTACT_TO_EMAIL;
@@ -152,6 +204,14 @@ export async function POST(req: NextRequest) {
     });
 
     if (error) {
+      // Log the upstream error WITHOUT echoing the user's submitted
+      // message. Resend error objects are usually just code + message;
+      // even so, log name + message only, never the request body.
+      console.error(
+        "[/api/contact] resend error:",
+        error.name ?? "unknown",
+        error.message ?? "(no message)",
+      );
       return NextResponse.json(
         { ok: false, error: "Email send failed" },
         { status: 502 },
@@ -160,7 +220,18 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true, id: data?.id ?? null });
   } catch (err) {
-    console.error("[/api/contact] send error:", err);
+    // Log only the error type, never the err object itself. The user's
+    // submitted `name`, `email`, and `message` must never appear in
+    // function logs — Vercel persists them and a log viewer could be
+    // a low-trust environment.
+    const e = err as { name?: string; message?: string; statusCode?: number };
+    console.error(
+      "[/api/contact] send error:",
+      e?.name ?? "unknown",
+      e?.message ?? "(no message)",
+      "status:",
+      e?.statusCode ?? "n/a",
+    );
     return NextResponse.json(
       { ok: false, error: "Unexpected error" },
       { status: 500 },
@@ -175,4 +246,61 @@ function escapeHtml(s: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+/**
+ * Cloudflare Turnstile verification. The siteverify endpoint accepts a
+ * form-encoded POST and returns { success: boolean, ... }.
+ *
+ * We bind the verification to the client IP (the `remoteip` field)
+ * when we can — this binds the token to the IP that solved it, so a
+ * stolen token is harder to reuse from a different origin.
+ *
+ * Reference: https://developers.cloudflare.com/turnstile/get-started/server-side-validation/
+ */
+async function verifyTurnstile(
+  token: string,
+  remoteIp: string,
+  secret: string,
+): Promise<boolean> {
+  const body = new URLSearchParams();
+  body.set("secret", secret);
+  body.set("response", token);
+  if (remoteIp && remoteIp !== "unknown") body.set("remoteip", remoteIp);
+
+  try {
+    const res = await fetch(
+      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: body.toString(),
+      },
+    );
+    if (!res.ok) return false;
+    const data = (await res.json()) as { success?: boolean; "error-codes"?: string[] };
+    if (!data.success) {
+      // Log only the error codes (not the full response, which can
+      // include echoed fields). Cloudflare returns a stable set of
+      // codes: missing-input-secret, invalid-input-secret,
+      // missing-input-response, invalid-input-response, bad-request,
+      // timeout-or-duplicate, internal-error.
+      console.warn(
+        "[/api/contact] turnstile failed:",
+        data["error-codes"]?.join(",") ?? "no codes",
+      );
+      return false;
+    }
+    return true;
+  } catch (err) {
+    // Network error to Cloudflare — fail closed (reject the submit) so
+    // an outage of the captcha service can't be used to bypass it.
+    const e = err as { name?: string; message?: string };
+    console.error(
+      "[/api/contact] turnstile network error:",
+      e?.name ?? "unknown",
+      e?.message ?? "(no message)",
+    );
+    return false;
+  }
 }

@@ -3,6 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Github, Linkedin, Mail, Code2, Copy } from "lucide-react";
 import { motion } from "framer-motion";
+import { TurnstileWidget } from "./turnstile-widget";
+
+// Cloudflare Turnstile site key. The widget is ONLY rendered when this
+// is set — in that case the server-side handler also requires the
+// matching TURNSTILE_SECRET and rejects any submit without a valid
+// token. When the env var is absent, the form runs without captcha
+// (and the honeypot + rate limit + origin check still hold).
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 type Status = "idle" | "sending" | "sent" | "error";
 
@@ -45,6 +53,7 @@ export function ContactSection() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [honeypot, setHoneypot] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [toastVisible, setToastVisible] = useState(false);
@@ -87,6 +96,14 @@ export function ContactSection() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    // If Turnstile is configured, block submit until the user has a
+    // valid token. The widget calls onToken("") on expiry / error, so
+    // the only "valid" state is a non-empty token.
+    if (TURNSTILE_SITE_KEY && !turnstileToken) {
+      setStatus("error");
+      setErrorMsg("Please complete the captcha first.");
+      return;
+    }
     setStatus("sending");
     setErrorMsg("");
 
@@ -94,7 +111,13 @@ export function ContactSection() {
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, message, website: honeypot }),
+        body: JSON.stringify({
+          name,
+          email,
+          message,
+          website: honeypot,
+          turnstileToken: TURNSTILE_SITE_KEY ? turnstileToken : undefined,
+        }),
       });
       const data: { ok: boolean; error?: string; fallbackMailto?: string } = await res.json();
 
@@ -222,10 +245,22 @@ export function ContactSection() {
                 required
               />
 
+              {TURNSTILE_SITE_KEY && (
+                <div data-reveal>
+                  <TurnstileWidget
+                    siteKey={TURNSTILE_SITE_KEY}
+                    onToken={setTurnstileToken}
+                  />
+                </div>
+              )}
+
               <div className="flex flex-wrap items-center gap-4">
                 <button
                   type="submit"
-                  disabled={status === "sending"}
+                  disabled={
+                    status === "sending" ||
+                    (!!TURNSTILE_SITE_KEY && !turnstileToken)
+                  }
                   className="btn-submit"
                 >
                   {status === "sending"
