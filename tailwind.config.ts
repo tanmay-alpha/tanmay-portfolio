@@ -6,16 +6,19 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // New amber-on-midnight palette
-        bg: "#07080E",
-        "bg-subtle": "#0D0F18",
-        surface: "#111420",
-        "surface-2": "#181C2A",
-        paper: "#F0F2F8",
-        accent: "#E8B84B",
-        "text-1": "#F0F2F8",
-        "text-2": "#8892A4",
-        "text-3": "#4A5166",
+        // Themed via CSS variables defined in globals.css :root and
+        // html[data-theme="light"]. Every utility class (bg-bg, text-text-1,
+        // border-border, etc.) re-resolves when <html data-theme> flips,
+        // so a single toggle re-themes the entire site.
+        bg: "var(--bg)",
+        "bg-subtle": "var(--bg-subtle)",
+        surface: "var(--surface)",
+        "surface-2": "var(--surface-2)",
+        paper: "var(--paper)",
+        accent: "var(--accent)",
+        "text-1": "var(--text-1)",
+        "text-2": "var(--text-2)",
+        "text-3": "var(--text-3)",
       },
       fontFamily: {
         sans: ["var(--font-inter-tight)", "system-ui", "sans-serif"],
