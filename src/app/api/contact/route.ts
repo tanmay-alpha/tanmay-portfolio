@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { Resend } from "resend";
+import { createRateLimiter, getClientIp } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,43 +22,61 @@ const ContactSchema = z.object({
   website: z.string().optional().default(""),
 });
 
-type RateLimitState = {
-  count: number;
-  resetAt: number;
-};
-
 // In-memory rate limit. Resets on cold start. For a single-server Vercel
 // deployment this is fine; a multi-region deploy would need Upstash.
-const RATE_LIMIT_MAX = 3;
-const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
-const ipBuckets = new Map<string, RateLimitState>();
+const contactLimiter = createRateLimiter({
+  max: 3,
+  windowMs: 10 * 60 * 1000,
+});
 
-function getClientIp(req: NextRequest): string {
-  const fwd = req.headers.get("x-forwarded-for");
-  if (fwd) return fwd.split(",")[0]?.trim() ?? "unknown";
-  return req.headers.get("x-real-ip") ?? "unknown";
-}
-
-function checkRateLimit(ip: string): { ok: boolean; retryAfterSec?: number } {
-  const now = Date.now();
-  const existing = ipBuckets.get(ip);
-  if (!existing || existing.resetAt < now) {
-    ipBuckets.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-    return { ok: true };
+/**
+ * CSRF defense — only same-origin POSTs are accepted. Vercel sets the
+ * `host` header from the request URL and `origin` from the browser, so
+ * comparing the two is a reliable same-origin check. Bots and curl can't
+ * fake Origin easily (browsers always send it for non-GET requests).
+ */
+function isSameOrigin(req: NextRequest): boolean {
+  const origin = req.headers.get("origin");
+  const referer = req.headers.get("referer");
+  const host = req.headers.get("host");
+  if (!host) return false;
+  // Origin is the strongest signal when present.
+  if (origin) {
+    try {
+      const u = new URL(origin);
+      return u.host === host;
+    } catch {
+      return false;
+    }
   }
-  if (existing.count >= RATE_LIMIT_MAX) {
-    return {
-      ok: false,
-      retryAfterSec: Math.ceil((existing.resetAt - now) / 1000),
-    };
+  // Fall back to referer for older browsers / form-submit edge cases.
+  if (referer) {
+    try {
+      const u = new URL(referer);
+      return u.host === host;
+    } catch {
+      return false;
+    }
   }
-  existing.count += 1;
-  return { ok: true };
+  // Neither header present — this is most likely a non-browser client
+  // (curl, server-to-server). For a contact form, that is a bot. Reject.
+  return false;
 }
 
 // ----- Handler ------------------------------------------------------------
 
 export async function POST(req: NextRequest) {
+  // CSRF / origin enforcement — runs before any work. Non-browser clients
+  // (curl, server-to-server) are rejected because we have no use case for
+  // them. This blocks drive-by cross-origin POSTs that would otherwise
+  // burn through the Resend quota.
+  if (!isSameOrigin(req)) {
+    return NextResponse.json(
+      { ok: false, error: "Forbidden" },
+      { status: 403 },
+    );
+  }
+
   let body: unknown;
   try {
     body = await req.json();
@@ -88,7 +107,7 @@ export async function POST(req: NextRequest) {
 
   // 2) Rate limit by IP.
   const ip = getClientIp(req);
-  const limit = checkRateLimit(ip);
+  const limit = contactLimiter(ip);
   if (!limit.ok) {
     return NextResponse.json(
       { ok: false, error: "Too many requests. Try again later." },
