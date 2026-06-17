@@ -50,6 +50,9 @@ The site returns the following security headers on every response
 | `X-Content-Type-Options` | `nosniff` |
 | `X-Frame-Options` | `DENY` |
 | `Referrer-Policy` | `strict-origin-when-cross-origin` |
+| `Cross-Origin-Opener-Policy` | `same-origin` |
+| `Cross-Origin-Resource-Policy` | `same-origin` |
+| `X-Permitted-Cross-Domain-Policies` | `none` |
 | `Permissions-Policy` | `camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()` |
 | `Strict-Transport-Security` | `max-age=63072000; includeSubDomains; preload` |
 | `Content-Security-Policy` | strict — see [Content Security Policy](#content-security-policy) below |
@@ -69,7 +72,7 @@ font-src 'self' data:;
 script-src 'self' 'unsafe-inline';
 style-src 'self' 'unsafe-inline';
 connect-src 'self';
-frame-src 'self';
+frame-src 'none';
 worker-src 'self' blob:;
 object-src 'none';
 frame-ancestors 'none';
@@ -100,10 +103,11 @@ report-uri /api/csp-report;
   anywhere. (Dev mode's React Refresh injects eval, but that
   only runs on `localhost`, never in production.)
 - **No remote script sources by default.** `https://plausible.io`
-  and `https://challenges.cloudflare.com` are appended to
-  `script-src` / `frame-src` automatically when their env var is
-  set.
-- **No remote styles, no remote frames, no plugins.** `object-src
+  is appended to `script-src` and `connect-src` only when
+  `NEXT_PUBLIC_PLAUSIBLE_DOMAIN` is set. `https://challenges.cloudflare.com`
+  is appended to `script-src`, `connect-src`, and `frame-src` only
+  when `NEXT_PUBLIC_TURNSTILE_SITE_KEY` is set.
+- **No remote styles, no frames by default, no plugins.** `object-src
   'none'` blocks Flash / Java / PDF embeds.
 - **Clickjacking blocked** by `frame-ancestors 'none'` and the
   legacy `X-Frame-Options: DENY` header.
@@ -149,20 +153,20 @@ Order of checks (cheapest / most-likely-to-reject first):
 1. **CSRF / origin check** — `Origin` must match the `Host` header.
    Falls back to `Referer` for older clients. Non-browser clients
    (no `Origin`, no `Referer`) are rejected as bots with 403.
-2. **Request size cap** — `Content-Length` must be ≤ 32 KB. The
-   parsed JSON body is also re-checked after parsing, so a
-   chunked-transfer client can't bypass the limit. Returns 413.
+2. **Request size cap** — the request stream is read with a hard
+   32 KB byte ceiling before JSON parsing, so chunked-transfer and
+   missing-`Content-Length` clients can't bypass the limit. Returns 413.
 3. **Honeypot** — a `website` field is rendered off-screen. If it's
    filled, the route silently returns `200 {ok:true}` without
    sending any email.
 4. **Zod input validation** — name (≤120), email (≤200, valid
    format), message (10–5000 chars). 400 on failure.
 5. **Per-IP rate limit** — 3 requests per 10 minutes per IP.
-6. **Cloudflare Turnstile** (only when `TURNSTILE_SECRET` is set) —
+6. **Cloudflare Turnstile** (only when both Turnstile env vars are set) —
    server verifies the `turnstileToken` against
    `challenges.cloudflare.com/turnstile/v0/siteverify`, bound to
-   client IP. 403 on failure. 400 if token is missing. Fails
-   **closed** on network error to Cloudflare.
+   client IP, with a 5 second timeout. 403 on failure. 400 if token
+   is missing. Fails **closed** on network error to Cloudflare.
 7. **Resend** — sends the email via the configured API key.
 8. **Log sanitization** — error logs only contain error code,
    name, message, and HTTP status from the upstream provider.
@@ -180,14 +184,18 @@ the Turnstile env vars.
 - Both routes **never throw** — failures are caught and returned as
   `{ fallback: true, reason: "..." }` so the UI degrades quietly
   rather than triggering a 5xx alarm.
+- Upstream calls are bounded by AbortController timeouts so slow
+  GitHub, LeetCode, or Render responses fall back instead of holding
+  a serverless function open until platform timeout.
 
 ### `POST /api/csp-report`
 
 - Per-IP rate limit (30/min).
+- The request stream is capped at 8 KB before JSON parsing.
 - Always returns 204 No Content.
-- Logs the report to Vercel function logs, truncated to 2 KB per
-  report. The browser does not read the response, so there's no
-  risk of leaking the report data back to the client.
+- Logs a sanitized summary to Vercel function logs, truncated to 2 KB
+  per report. URL query strings and hashes are stripped before logging
+  so report URLs cannot leak tokens or email addresses into logs.
 
 ### Image proxy `/_next/image`
 
@@ -208,8 +216,13 @@ unset has historically been an SSRF vector.
   forces a patched postcss version across the dependency tree,
   closing a moderate XSS advisory that the Next.js 15.5 bundle
   re-introduces transitively.
-- `resend`, `zod`, and other runtime deps are pinned to caret ranges
-  so they pick up patch releases. Major-version bumps are reviewed.
+- Runtime dependencies use semver ranges, but `package-lock.json`
+  pins the exact tarballs with registry `integrity` hashes. Minor
+  and major dependency updates are reviewed through the lockfile diff.
+- `package.json` declares Node `>=20.9.0`, matching the runtime
+  requirements of Resend and Sharp.
+- `overrides.three-mesh-bvh` forces 0.8.x so Drei does not install
+  the deprecated 0.7.x line against the current Three.js runtime.
 
 ## Secrets
 
@@ -224,6 +237,14 @@ unset has historically been an SSRF vector.
 - No client-side code reads any non-`NEXT_PUBLIC_*` variable.
 
 ## Audit history
+- 2026-06-17 — Full hardening audit. Added streaming body caps for
+  `/api/contact` and `/api/csp-report`, sanitized CSP report logging,
+  Turnstile and LeetCode fetch timeouts, Turnstile config mismatch
+  fail-closed behavior, capped rate-limit buckets with validated IP
+  parsing, COOP/CORP/cross-domain-policy headers, stricter `frame-src`,
+  Plausible `connect-src`, GitHub payload shape guards, browser commit
+  URLs, Node engine declaration, lockfile integrity refresh, and a
+  `three-mesh-bvh` override.
 
 - 2026-06-16 — Follow-up hardening. CSP gets explicit
   `style-src` (was falling back to `default-src`, which blocked

@@ -7,7 +7,7 @@ type Project = {
   subtitle: string;
   oneLiner: string;
   stack: ReadonlyArray<string>;
-  github: string;
+  github?: string;
   live?: { label: string; href: string };
 };
 
@@ -18,7 +18,6 @@ const PROJECTS: ReadonlyArray<Project> = [
     oneLiner:
       "A trading terminal for NSE — WebSocket tick streaming, paper-trading, strategy backtesting.",
     stack: ["next.js 14", "typescript", "python", "fastapi", "websocket", "pandas"],
-    github: "https://github.com/tanmay-alpha/maet",
   },
   {
     name: "Lumint",
@@ -103,14 +102,16 @@ export function WorkSection() {
                   <p className="project-desc mt-2">{project.oneLiner}</p>
                 </div>
                 <div className="md:col-span-3 flex flex-col items-start gap-3 md:items-end">
-                  <a
-                    href={project.github}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="project-github"
-                  >
-                    View on GitHub →
-                  </a>
+                  {project.github && (
+                    <a
+                      href={project.github}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="project-github"
+                    >
+                      View on GitHub →
+                    </a>
+                  )}
                   {project.live && (
                     <a
                       href={project.live.href}

@@ -37,9 +37,9 @@ NEXT_PUBLIC_PLAUSIBLE_DOMAIN=tanmay-portfolio-coral.vercel.app
 - The script tag in `app/layout.tsx` only renders when the env var is
   set.
 - Strategy is `afterInteractive`, so it never blocks rendering.
-- The footer shows a small **"N views this month"** badge that pulls
-  from Plausible's public stats API. If the API is unreachable, the
-  badge just doesn't appear — no error UI.
+- CSP automatically allows `https://plausible.io` in `script-src`
+  and `connect-src` only when the env var is set, so the script and
+  event POST work without opening that origin by default.
 
 ## Privacy
 

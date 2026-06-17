@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createRateLimiter, getClientIp } from "@/lib/rate-limit";
+import { mapPushEvent, type Commit } from "@/lib/github-commits";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -50,74 +51,6 @@ async function safeFetch(
   }
 }
 
-// ----- Commit mapping -----------------------------------------------------
-
-type GhCommit = {
-  sha: string;
-  url: string;
-  html_url: string;
-  commit: { message: string; author: { name: string; email: string; date: string } };
-};
-
-type GhPushPayload = {
-  push_id: number;
-  ref: string;
-  head: string;
-  size: number;
-  commits: GhCommit[];
-};
-
-export type Commit = {
-  id: string;
-  repo: string;
-  message: string;
-  url: string;
-  sha7: string;
-  timestamp: string;
-  additions: number | null;
-  deletions: number | null;
-};
-
-function isLikelyBotAuthor(name: string, email: string): boolean {
-  // GitHub's bot authors carry the [bot] suffix in their display name and
-  // a users.noreply.github.com email. The events API only gives us the
-  // commit author (not the GitHub login), so this is a heuristic, not a
-  // guarantee. The result is honest: real bot commits still come through
-  // sometimes, and the user can curate later.
-  if (name.endsWith("[bot]")) return true;
-  if (name.toLowerCase().includes("github-actions")) return true;
-  if (email.toLowerCase().endsWith("@users.noreply.github.com") && name.toLowerCase().includes("bot")) return true;
-  return false;
-}
-
-function mapPushEvent(evt: {
-  created_at: string;
-  repo: { name: string };
-  payload: unknown;
-}): Commit[] {
-  if (!evt || typeof evt !== "object") return [];
-  const payload = evt.payload as GhPushPayload;
-  if (!payload || !Array.isArray(payload.commits)) return [];
-  const repo = evt.repo.name;
-  return payload.commits
-    .filter((c) => c && typeof c.sha === "string")
-    .map<Commit>((c) => ({
-      id: c.sha,
-      repo,
-      message: (c.commit.message ?? "").split("\n")[0] ?? "",
-      url: c.html_url ?? c.url,
-      sha7: c.sha.slice(0, 7),
-      timestamp: c.commit.author?.date ?? evt.created_at,
-      additions: null,
-      deletions: null,
-    }))
-    .filter((c) => {
-      // Reconstruct the author info for filtering.
-      const matched = payload.commits.find((p) => p.sha === c.id);
-      if (!matched) return true;
-      return !isLikelyBotAuthor(matched.commit.author.name, matched.commit.author.email);
-    });
-}
 
 export type CommitsResponse = {
   commits: Commit[];
@@ -187,13 +120,26 @@ async function getCommits() {
   }
 
   if (eventsRes.ok) {
-    const events =
-      (eventsRes.data as Array<{
-        type: string;
-        created_at: string;
-        repo: { name: string };
-        payload: unknown;
-      }>) ?? [];
+    if (!Array.isArray(eventsRes.data)) {
+      return NextResponse.json<CommitsResponse>(
+        {
+          commits: [],
+          fetchedAt,
+          cached: false,
+          fallback: true,
+          reason: "error",
+          error: "invalid_events_payload",
+        },
+        { status: 200 },
+      );
+    }
+
+    const events = eventsRes.data as Array<{
+      type: string;
+      created_at: string;
+      repo: { name: string };
+      payload: unknown;
+    }>;
 
     const pushEvents = events.filter((e) => e && e.type === "PushEvent");
 
@@ -229,9 +175,21 @@ async function getCommits() {
   );
 
   if (reposRes.ok) {
-    const repos =
-      (reposRes.data as Array<{ name: string; fork?: boolean }>) ?? [];
-    const ownRepos = repos
+    if (!Array.isArray(reposRes.data)) {
+      return NextResponse.json<CommitsResponse>(
+        {
+          commits: [],
+          fetchedAt,
+          cached: false,
+          fallback: true,
+          reason: "error",
+          error: "invalid_repos_payload",
+        },
+        { status: 200 },
+      );
+    }
+
+    const ownRepos = (reposRes.data as Array<{ name: string; fork?: boolean }>)
       .filter((r) => r && r.name && !r.fork)
       .slice(0, 8); // cap fan-out — we only need 10 commits total
 
@@ -325,7 +283,14 @@ async function getStats() {
     );
   }
 
-  const repos = (res.data as Array<{ stargazers_count?: number; fork?: boolean; public?: boolean }>) ?? [];
+  if (!Array.isArray(res.data)) {
+    return NextResponse.json<StatsResponse>(
+      { stars: null, publicRepos: null, fetchedAt, cached: false, fallback: true },
+      { status: 200 },
+    );
+  }
+
+  const repos = res.data as Array<{ stargazers_count?: number; fork?: boolean; public?: boolean }>;
   // Don't count forks — only stars on your own projects.
   const stars = repos
     .filter((r) => !r.fork)

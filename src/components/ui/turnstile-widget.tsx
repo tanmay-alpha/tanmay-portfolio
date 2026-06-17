@@ -24,6 +24,7 @@ declare global {
 type Props = {
   siteKey: string;
   onToken: (token: string) => void;
+  onError: () => void;
 };
 
 /**
@@ -34,7 +35,7 @@ type Props = {
  * Important: do NOT include a nonce on the Turnstile <script> tag if
  * your CSP uses one — we don't use a nonce, so this just works.
  */
-export function TurnstileWidget({ siteKey, onToken }: Props) {
+export function TurnstileWidget({ siteKey, onToken, onError }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const widgetIdRef = useRef<string | null>(null);
   const [scriptReady, setScriptReady] = useState(false);
@@ -61,12 +62,13 @@ export function TurnstileWidget({ siteKey, onToken }: Props) {
     s.addEventListener("load", () => setScriptReady(true), { once: true });
     s.addEventListener("error", () => {
       // Script load failed (network, CSP, ad-blocker). Surface to the
-      // parent as a missing token so the server's fail-closed path
-      // takes over.
+      // parent so users can fall back to direct email instead of seeing
+      // an inert disabled form.
       onToken("");
+      onError();
     });
     document.head.appendChild(s);
-  }, [onToken]);
+  }, [onError, onToken]);
 
   // 2) Render the widget once the script is ready.
   useEffect(() => {
@@ -78,7 +80,10 @@ export function TurnstileWidget({ siteKey, onToken }: Props) {
       sitekey: siteKey,
       callback: (token) => onToken(token),
       "expired-callback": () => onToken(""),
-      "error-callback": () => onToken(""),
+      "error-callback": () => {
+        onToken("");
+        onError();
+      },
       theme: "auto",
     });
 
@@ -92,7 +97,7 @@ export function TurnstileWidget({ siteKey, onToken }: Props) {
         widgetIdRef.current = null;
       }
     };
-  }, [scriptReady, siteKey, onToken]);
+  }, [scriptReady, siteKey, onError, onToken]);
 
   return <div ref={containerRef} className="cf-turnstile" />;
 }

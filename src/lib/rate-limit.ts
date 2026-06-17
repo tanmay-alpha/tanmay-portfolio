@@ -1,3 +1,5 @@
+import { isIP } from "node:net";
+
 /**
  * Tiny in-memory rate limiter, shared across routes.
  *
@@ -11,6 +13,23 @@ type Bucket = { count: number; resetAt: number };
 
 export type RateLimitResult = { ok: true } | { ok: false; retryAfterSec: number };
 
+const MAX_BUCKETS = 2048;
+
+function pruneExpiredBuckets(buckets: Map<string, Bucket>, now: number): void {
+  for (const [key, bucket] of buckets) {
+    if (bucket.resetAt < now) buckets.delete(key);
+  }
+}
+
+function capBucketCount(buckets: Map<string, Bucket>): void {
+  while (buckets.size > MAX_BUCKETS) {
+    const oldestKey = buckets.keys().next().value;
+    if (oldestKey === undefined) return;
+    buckets.delete(oldestKey);
+  }
+}
+
+
 export function createRateLimiter(opts: {
   /** Max requests per window. */
   max: number;
@@ -21,6 +40,11 @@ export function createRateLimiter(opts: {
 
   return function check(key: string): RateLimitResult {
     const now = Date.now();
+    if (buckets.size > MAX_BUCKETS) {
+      pruneExpiredBuckets(buckets, now);
+      capBucketCount(buckets);
+    }
+
     const existing = buckets.get(key);
     if (!existing || existing.resetAt < now) {
       buckets.set(key, { count: 1, resetAt: now + opts.windowMs });
@@ -37,15 +61,21 @@ export function createRateLimiter(opts: {
   };
 }
 
-/**
- * Extract a stable client IP from common Vercel/proxy headers. Falls back
- * to the literal string "unknown" if nothing is present — callers should
- * treat that as a single shared bucket (more restrictive is safer).
- */
+function firstForwardedIp(value: string | null): string | null {
+  const candidate = value?.split(",")[0]?.trim();
+  if (!candidate) return null;
+  return isIP(candidate) ? candidate : null;
+}
+
 export function getClientIp(req: { headers: Headers }): string {
-  const vercelFwd = req.headers.get("x-vercel-forwarded-for");
-  if (vercelFwd) return vercelFwd.split(",")[0]?.trim() ?? "unknown";
-  const fwd = req.headers.get("x-forwarded-for");
-  if (fwd) return fwd.split(",")[0]?.trim() ?? "unknown";
-  return req.headers.get("x-real-ip") ?? "unknown";
+  const vercelForwardedFor = req.headers.get("x-vercel-forwarded-for");
+  if (vercelForwardedFor !== null) {
+    return firstForwardedIp(vercelForwardedFor) ?? "unknown";
+  }
+
+  return (
+    firstForwardedIp(req.headers.get("x-forwarded-for")) ??
+    firstForwardedIp(req.headers.get("x-real-ip")) ??
+    "unknown"
+  );
 }

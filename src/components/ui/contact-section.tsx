@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Github, Linkedin, Mail, Code2, Copy } from "lucide-react";
 import { motion } from "framer-motion";
 import { TurnstileWidget } from "./turnstile-widget";
@@ -54,11 +54,14 @@ export function ContactSection() {
   const [message, setMessage] = useState("");
   const [honeypot, setHoneypot] = useState("");
   const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
+  const [captchaError, setCaptchaError] = useState(false);
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [toastVisible, setToastVisible] = useState(false);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sectionRef = useRef<HTMLElement>(null);
+  const isSubmittingRef = useRef(false);
 
   const showCopyToast = () => {
     setToastVisible(true);
@@ -94,16 +97,40 @@ export function ContactSection() {
     return () => observer.disconnect();
   }, []);
 
+  const resetTurnstile = useCallback(() => {
+    if (!TURNSTILE_SITE_KEY) return;
+    setTurnstileToken("");
+    setTurnstileResetKey((key) => key + 1);
+  }, []);
+
+  const handleTurnstileToken = useCallback((token: string) => {
+    setCaptchaError(false);
+    setTurnstileToken(token);
+  }, []);
+
+  const handleTurnstileError = useCallback(() => {
+    setCaptchaError(true);
+    setTurnstileToken("");
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // If Turnstile is configured, block submit until the user has a
-    // valid token. The widget calls onToken("") on expiry / error, so
-    // the only "valid" state is a non-empty token.
+    if (isSubmittingRef.current) return;
+
+    // If Turnstile is configured, let the submit attempt surface a useful
+    // fallback instead of disabling the form forever when the widget cannot
+    // load or the token expired.
     if (TURNSTILE_SITE_KEY && !turnstileToken) {
       setStatus("error");
-      setErrorMsg("Please complete the captcha first.");
+      setErrorMsg(
+        captchaError
+          ? "Captcha couldn't load. Email me instead."
+          : "Please complete the captcha first.",
+      );
       return;
     }
+
+    isSubmittingRef.current = true;
     setStatus("sending");
     setErrorMsg("");
 
@@ -126,12 +153,18 @@ export function ContactSection() {
         setName("");
         setEmail("");
         setMessage("");
+        resetTurnstile();
         setTimeout(() => setStatus("idle"), 3000);
         return;
       }
 
+      resetTurnstile();
+
       if (res.status === 503 && data.fallbackMailto) {
-        window.location.href = buildMailto(name, email, message);
+        const fallbackRecipient = data.fallbackMailto.startsWith("mailto:")
+          ? data.fallbackMailto.slice(7).split("?")[0] || CONTACT_EMAIL
+          : CONTACT_EMAIL;
+        window.location.href = buildMailto(name, email, message, fallbackRecipient);
         setStatus("error");
         setErrorMsg(
           "Contact form isn't configured yet — opening your email client instead.",
@@ -141,8 +174,11 @@ export function ContactSection() {
       setStatus("error");
       setErrorMsg(data.error ?? "Couldn't send. Email me instead.");
     } catch {
+      resetTurnstile();
       setStatus("error");
       setErrorMsg("Couldn't reach the server. Email me instead.");
+    } finally {
+      isSubmittingRef.current = false;
     }
   };
 
@@ -248,19 +284,23 @@ export function ContactSection() {
               {TURNSTILE_SITE_KEY && (
                 <div data-reveal>
                   <TurnstileWidget
+                    key={turnstileResetKey}
                     siteKey={TURNSTILE_SITE_KEY}
-                    onToken={setTurnstileToken}
+                    onToken={handleTurnstileToken}
+                    onError={handleTurnstileError}
                   />
                 </div>
+              )}
+              {captchaError && (
+                <p className="font-mono text-xs text-text-3">
+                  Captcha could not load. The email fallback still works.
+                </p>
               )}
 
               <div className="flex flex-wrap items-center gap-4">
                 <button
                   type="submit"
-                  disabled={
-                    status === "sending" ||
-                    (!!TURNSTILE_SITE_KEY && !turnstileToken)
-                  }
+                  disabled={status === "sending"}
                   className="btn-submit"
                 >
                   {status === "sending"
@@ -350,7 +390,7 @@ function Field({
   );
 }
 
-function buildMailto(name: string, email: string, message: string): string {
+function buildMailto(name: string, email: string, message: string, recipient = CONTACT_EMAIL): string {
   const subject = encodeURIComponent(
     name ? `[portfolio] ${name}` : "[portfolio] hello",
   );
@@ -359,7 +399,7 @@ function buildMailto(name: string, email: string, message: string): string {
       ? `${message}\n\n— ${name}${email ? ` <${email}>` : ""}`
       : `Hi Tanmay,\n\n— ${name}${email ? ` <${email}>` : ""}`,
   );
-  return `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
+  return `mailto:${recipient}?subject=${subject}&body=${body}`;
 }
 
 function ProfileLink({
@@ -376,24 +416,29 @@ function ProfileLink({
     if (!link.copyOnClick) return;
     e.preventDefault();
     const text = link.copyOnClick;
+    let ta: HTMLTextAreaElement | null = null;
     try {
+      let copiedOk = false;
       if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(text);
+        copiedOk = true;
       } else {
-        const ta = document.createElement("textarea");
+        ta = document.createElement("textarea");
         ta.value = text;
         ta.style.position = "fixed";
         ta.style.opacity = "0";
         document.body.appendChild(ta);
         ta.select();
-        document.execCommand("copy");
-        document.body.removeChild(ta);
+        copiedOk = document.execCommand("copy");
       }
+      if (!copiedOk) throw new Error("copy failed");
       setCopied(true);
       onCopy();
       setTimeout(() => setCopied(false), 1500);
     } catch {
       // Clipboard denied.
+    } finally {
+      if (ta?.parentNode) ta.parentNode.removeChild(ta);
     }
   };
 

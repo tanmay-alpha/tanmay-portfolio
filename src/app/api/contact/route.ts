@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { Resend } from "resend";
 import { createRateLimiter, getClientIp } from "@/lib/rate-limit";
+import { RequestBodyTooLargeError, readTextWithinLimit } from "@/lib/request-body";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,7 +31,7 @@ const ContactSchema = z.object({
   // configured; the server skips verification when TURNSTILE_SECRET
   // is unset (the form works without captcha in that case, but the
   // honeypot + rate limit + origin check still hold).
-  turnstileToken: z.string().optional(),
+  turnstileToken: z.string().max(2048).optional(),
 });
 
 // In-memory rate limit. Resets on cold start. For a single-server Vercel
@@ -89,10 +90,18 @@ export async function POST(req: NextRequest) {
   }
 
   let body: unknown;
-  // Reject oversized bodies early, before parsing. Content-Length is
-  // set by the client (spoofable) but Vercel enforces a default
-  // request size limit too; combined, this closes the trivial DoS.
-  const contentLength = Number(req.headers.get("content-length") ?? 0);
+  // Reject oversized bodies before parsing. Content-Length is client-supplied,
+  // so it is only a fast path; readTextWithinLimit enforces the real cap for
+  // chunked or missing-length requests.
+  const contentLengthHeader = req.headers.get("content-length");
+  const contentLength =
+    contentLengthHeader === null ? 0 : Number(contentLengthHeader);
+  if (!Number.isFinite(contentLength) || contentLength < 0) {
+    return NextResponse.json(
+      { ok: false, error: "Invalid Content-Length" },
+      { status: 400 },
+    );
+  }
   if (contentLength > MAX_BODY_BYTES) {
     return NextResponse.json(
       { ok: false, error: "Request body too large" },
@@ -100,20 +109,18 @@ export async function POST(req: NextRequest) {
     );
   }
   try {
-    body = await req.json();
-  } catch {
+    const rawBody = await readTextWithinLimit(req, MAX_BODY_BYTES);
+    body = JSON.parse(rawBody);
+  } catch (err) {
+    if (err instanceof RequestBodyTooLargeError) {
+      return NextResponse.json(
+        { ok: false, error: "Request body too large" },
+        { status: 413 },
+      );
+    }
     return NextResponse.json(
       { ok: false, error: "Invalid JSON body" },
       { status: 400 },
-    );
-  }
-  // Belt-and-suspenders: even if Content-Length was missing or lied,
-  // re-check the parsed body. Serializing back is cheap (<32KB) and
-  // catches a chunked-streamed oversized payload.
-  if (JSON.stringify(body).length > MAX_BODY_BYTES) {
-    return NextResponse.json(
-      { ok: false, error: "Request body too large" },
-      { status: 413 },
     );
   }
 
@@ -148,12 +155,23 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 3) Cloudflare Turnstile (only when configured). The widget is
-  //    rendered by the client; we verify the token server-side. If
-  //    TURNSTILE_SECRET is unset, the form works without captcha (and
-  //    the honeypot + rate limit + origin check still apply).
+  // 3) Cloudflare Turnstile. If either side of the captcha config is present,
+  //    both must be present; otherwise the UI can require a captcha the server
+  //    cannot verify, or the server can require a token the UI cannot mint.
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
   const turnstileSecret = process.env.TURNSTILE_SECRET;
-  if (turnstileSecret) {
+  if (turnstileSiteKey || turnstileSecret) {
+    if (!turnstileSiteKey || !turnstileSecret) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            "Contact form captcha is not configured correctly. Please use the mailto link instead.",
+          fallbackMailto: "mailto:mangaltanmay7@gmail.com",
+        },
+        { status: 503 },
+      );
+    }
     const token = parsed.data.turnstileToken;
     if (!token) {
       return NextResponse.json(
@@ -268,6 +286,9 @@ async function verifyTurnstile(
   body.set("response", token);
   if (remoteIp && remoteIp !== "unknown") body.set("remoteip", remoteIp);
 
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 5000);
+
   try {
     const res = await fetch(
       "https://challenges.cloudflare.com/turnstile/v0/siteverify",
@@ -275,6 +296,7 @@ async function verifyTurnstile(
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: body.toString(),
+        signal: ctrl.signal,
       },
     );
     if (!res.ok) return false;
@@ -302,5 +324,7 @@ async function verifyTurnstile(
       e?.message ?? "(no message)",
     );
     return false;
+  } finally {
+    clearTimeout(timer);
   }
 }

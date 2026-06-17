@@ -26,6 +26,18 @@ const SECURITY_HEADERS = [
     value: "strict-origin-when-cross-origin",
   },
   {
+    key: "Cross-Origin-Opener-Policy",
+    value: "same-origin",
+  },
+  {
+    key: "Cross-Origin-Resource-Policy",
+    value: "same-origin",
+  },
+  {
+    key: "X-Permitted-Cross-Domain-Policies",
+    value: "none",
+  },
+  {
     key: "Permissions-Policy",
     value: [
       "camera=()",
@@ -92,11 +104,13 @@ const SECURITY_HEADERS = [
 
       const styleSrc = ["'self'", "'unsafe-inline'"].join(" ");
 
-      const connectSrc = ["'self'", hasPlausible ? plausibleHost : null]
-        .filter(Boolean).join(" ");
+      const connectSrc = [
+        "'self'",
+        hasPlausible ? plausibleHost : null,
+        hasTurnstile ? turnstileHost : null,
+      ].filter(Boolean).join(" ");
 
-      const frameSrc = ["'self'", hasTurnstile ? turnstileHost : null]
-        .filter(Boolean).join(" ");
+      const frameSrc = (hasTurnstile ? [turnstileHost] : ["'none'"]).join(" ");
 
       return [
         "default-src 'self'",

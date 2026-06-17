@@ -45,10 +45,14 @@ async function getLeetcode() {
     fallback: true,
   };
 
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 6000);
+
   try {
     const res = await fetch(LEETCODE_URL, {
       next: { revalidate: 3600 },
       headers: { Accept: "application/json" },
+      signal: ctrl.signal,
     });
 
     if (!res.ok) {
@@ -83,5 +87,7 @@ async function getLeetcode() {
     );
   } catch {
     return NextResponse.json(fallbackPayload, { status: 200 });
+  } finally {
+    clearTimeout(timer);
   }
 }

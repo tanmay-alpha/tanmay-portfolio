@@ -1,4 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { summarizeCspReport } from "@/lib/csp-report";
+import { createRateLimiter, getClientIp } from "@/lib/rate-limit";
+import { RequestBodyTooLargeError, readTextWithinLimit } from "@/lib/request-body";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,74 +16,61 @@ export const dynamic = "force-dynamic";
  * during development and in production.
  *
  * The endpoint ALWAYS returns 204 No Content — the browser doesn't care
- * about the response, only that the report was accepted. Logging the
- * raw report (not echoing it back) is deliberate: clients can't read
- * the response anyway, and we never want to leak the violation data
- * via Response.
+ * about the response, only that the report was accepted. We log only a
+ * sanitized summary, never the raw report, because report URLs can carry
+ * tokens or email addresses in query strings.
  *
- * If a deployment receives a flood of reports, the rate limit below
- * bounds Vercel function cost. A malicious actor can spam reports to
- * fill logs, so we cap at 30/min/IP and drop everything after that.
+ * If a deployment receives a flood of reports, the rate limit and stream
+ * cap bound Vercel function cost and memory use. A malicious actor can
+ * spam reports to fill logs, so we cap at 30/min/IP, drop everything
+ * after that, and stop reading any single report after 8 KB.
  */
 
 type Report = unknown;
 
-const reportLimiter = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT_MAX = 30;
 const RATE_LIMIT_WINDOW_MS = 60_000;
+const MAX_REPORT_BYTES = 8 * 1024;
 
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const existing = reportLimiter.get(ip);
-  if (!existing || existing.resetAt < now) {
-    reportLimiter.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-    return true;
-  }
-  if (existing.count >= RATE_LIMIT_MAX) return false;
-  existing.count += 1;
-  return true;
-}
+const reportLimiter = createRateLimiter({
+  max: RATE_LIMIT_MAX,
+  windowMs: RATE_LIMIT_WINDOW_MS,
+});
 
-function getClientIp(req: NextRequest): string {
-  const vercelFwd = req.headers.get("x-vercel-forwarded-for");
-  if (vercelFwd) return vercelFwd.split(",")[0]?.trim() ?? "unknown";
-  return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-}
-
-async function readReportBody(req: NextRequest): Promise<Report> {
-  const contentType = req.headers.get("content-type") ?? "";
-  if (contentType.includes("application/csp-report")) {
-    // Legacy format: a single JSON object.
-    return (await req.json()) as Report;
-  }
-  if (contentType.includes("application/reports+json")) {
-    // Reporting API v1: an array of reports.
-    return (await req.json()) as Report;
+function parseReportBody(contentType: string, rawBody: string): Report {
+  if (
+    contentType.includes("application/csp-report") ||
+    contentType.includes("application/reports+json")
+  ) {
+    return JSON.parse(rawBody) as Report;
   }
   // Fallback: best-effort text. We don't reject — the browser sent
-  // something; logging it is more useful than 4xx-ing.
-  return await req.text();
+  // something; logging that a non-JSON report arrived is more useful
+  // than 4xx-ing.
+  return rawBody;
 }
 
 export async function POST(req: NextRequest) {
-  const ip = getClientIp(req);
-  if (!checkRateLimit(ip)) {
+  const limit = reportLimiter(getClientIp(req));
+  if (!limit.ok) {
     return new NextResponse(null, { status: 204 });
   }
 
   let report: Report;
   try {
-    report = await readReportBody(req);
-  } catch {
-    // Body unparseable — log and accept.
-    console.warn("[csp-report] unparseable body from", ip);
+    const rawBody = await readTextWithinLimit(req, MAX_REPORT_BYTES);
+    report = parseReportBody(req.headers.get("content-type") ?? "", rawBody);
+  } catch (err) {
+    // Body oversized or unparseable — accept without echoing client data.
+    if (err instanceof RequestBodyTooLargeError) {
+      console.warn("[csp-report] oversized body dropped");
+    } else {
+      console.warn("[csp-report] unparseable body");
+    }
     return new NextResponse(null, { status: 204 });
   }
 
-  // One log line per violation. Truncate to bound log size if someone
-  // spams 1MB reports.
-  const summary = JSON.stringify(report).slice(0, 2000);
-  console.warn("[csp-report]", ip, summary);
+  console.warn("[csp-report]", summarizeCspReport(report));
 
   return new NextResponse(null, { status: 204 });
 }
