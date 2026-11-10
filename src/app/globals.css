@@ -29,7 +29,7 @@
   /* Text hierarchy */
   --text-1:        #F0F2F8;
   --text-2:        #8892A4;
-  --text-3:        #4A5166;
+  --text-3:        #9098AC;
   --text-on-accent: #07080E;
 
   /* Scrim for the .nav-scrolled state (matches bg + alpha). */
@@ -57,13 +57,14 @@ html[data-theme="light"] {
   --border:        rgba(15, 18, 30, 0.08);
   --border-strong: rgba(15, 18, 30, 0.16);
 
-  --accent:        #B8862A;
+  --accent:        #91651A;
   --accent-dim:    rgba(184, 134, 42, 0.14);
   --accent-glow:   rgba(184, 134, 42, 0.10);
+  --rust:          #A34529;
 
   --text-1:        #15182B;
   --text-2:        #4A5166;
-  --text-3:        #7A8195;
+  --text-3:        #61697D;
   --text-on-accent: #FFFFFF;
 
   --nav-scrim:     rgba(247, 246, 241, 0.88);
@@ -124,6 +125,15 @@ body::after {
 
   a {
     color: inherit;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+  }
+
+  section[id] {
+    scroll-margin-top: 88px;
   }
 }
 
@@ -231,7 +241,7 @@ body::after {
   }
   .btn-primary {
     background: var(--accent);
-    color: #07080e;
+    color: var(--text-on-accent);
     border: 1px solid var(--accent);
   }
   .btn-primary:hover {
@@ -429,7 +439,7 @@ body::after {
     font-size: 14px;
     color: var(--text-1);
     transition: border-color 0.15s, box-shadow 0.15s;
-    outline: none;
+    outline-offset: 3px;
     font-family: inherit;
   }
 
@@ -530,10 +540,10 @@ body::after {
     border-top: 1px solid var(--border);
   }
   .skip-link {
-    position: absolute;
+    position: fixed;
     top: -100%;
     left: 1rem;
-    z-index: 60;
+    z-index: 300;
     padding: 0.5rem 0.75rem;
     border-radius: 0.375rem;
     background-color: var(--bg);

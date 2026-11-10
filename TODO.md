@@ -16,24 +16,33 @@ Status: [ ] open · [~] in progress · [x] done
 - [x] Main — More Work: refresh list; About: remove stale/unverified stats (6 repos, 600+ tests, LeetCode)
 - [x] GPT — Remove dead code (aurora-orb, commit-feed, mid-page-rail, leetcode route/lib), drop `three`/`@react-three/*` deps
 - [x] GPT — Contact API audit + tests; verify Vercel env var names (no values)
-- [x] Main — `npm run build`, commit, push, verify Vercel preview/production
+- [x] Main — `npm run build`, commit, push, verify production deployment (2026-11-10)
 
-## P1
-- [x] Gemini — Contact section copy (freelance), nav items, metadata/OG copy, light-mode check, mobile nav
-- [x] GPT — Tests for contact validation/rate limit; fix `tsc` on tests; CI workflow check; Lighthouse measurements
-- [x] Main — README/CLAUDE.md refresh
+## P1 (round 1 corrections: items below were wrongly ticked earlier)
+- [x] Design agent — Contact section copy, nav items, metadata/OG copy (done; light mode + mobile nav NOT yet tested)
+- [x] GPT — Contact validation/rate-limit tests, tsc fix, CI workflow
+- [ ] README/CLAUDE.md refresh (not done)
+- [ ] Lighthouse numbers (not done in round 1)
 
-## P2
-- [ ] Case-study pages for 2 flagship projects (needs real screenshots from deployed apps)
-- [ ] Real project screenshots (capture from live deployments)
+## Round 2
+- [ ] **P0 Contact form E2E verification** — BLOCKED on owner: `vercel env ls` (project linked as tanmay-portfolio) still shows NO env vars. Needed names: RESEND_API_KEY, CONTACT_TO_EMAIL, optional CONTACT_FROM_EMAIL, NEXT_PUBLIC_TURNSTILE_SITE_KEY + TURNSTILE_SECRET_KEY (see TURNSTILE_SETUP.md). After set + redeploy: submit test, confirm mail arrives.
+- [x] P0 Lighthouse desktop+mobile and fixes — local prod build, desktop 100/100/100/100, mobile 100/100/100/100 (perf/a11y/best-practices/seo) after fixes; before: perf 100/94, a11y 94/94; mobile LCP 3014→907 ms. Lab numbers on localhost, not production.
+- [x] P0 Dark/light theme + mobile nav tested at 390/1280 in browser; contrast, focus trap, scroll lock fixed
+- [x] P1 Genuine screenshots captured (MAET x2, GatePass login, Crucible demo unused)
+- [x] P1 Case studies /work/maet, /work/gatepass (Crucible case study: not written, open)
+- [x] P1 Experience audit vs public/resume.pdf — Main. Aligned TradeVed (title "Quantitative Research Intern"), Dynamic Bubble, Shipd to resume wording; removed "live in production", ai-workspace workflow claim, Techfest/ECell numeric claims (not in resume). Education section lines removal assigned to PerfA11y.
+- [x] tests (22) + lint + build pass locally; deployment verification: see report
+- [ ] P2 README/CLAUDE.md refresh
+
+## P2 (carried)
+- [ ] Case-study pages / screenshots → Round 2 above
 
 ## Needs owner verification (not publishable as fact)
-- Outlier, Turing, Meera, DataAnnotation: exact work/dates unverified. Listed only as independent contributor platforms, no roles/dates.
-- Shipd: "10+ challenges" is from the existing resume entry; confirm.
-- Techfest "top 4,000 of 50,000+" and "+40% registrations" carried over from existing site; confirm.
-- TradeVed screener is private: mentioned in experience only, no links or data.
+- Techfest "top 4,000 of 50,000+", "+40% registrations", ECell "ran ops for 2 events": not in resume → removed from site.
+- Outlier, Turing, Meera, DataAnnotation: only a general contributor statement is published (no roles/dates); confirm wording or remove.
+- Resume itself lists "ML Engineer" in the Shipd title and "$2M+ paid out"; the site omits both.
+- TradeVed screener is private: mentioned in experience only.
 
 ## Findings
-- **Vercel project has NO env vars** (RESEND_API_KEY, CONTACT_TO_EMAIL, Turnstile keys absent): the contact form cannot deliver email in production until they are set. Needs owner action (secrets). Added optional CONTACT_FROM_EMAIL; sandbox sender only delivers to Resend account owner.
-- Last production deploy was 146 days old before this push.
-- Not done: Lighthouse numbers, case-study pages, real screenshots (P2).
+- Resume lists MAET "600+ tests"; site no longer shows test counts (unverified in repo).
+- Sandbox Resend sender only delivers to the Resend account owner; verify a domain for real client mail.

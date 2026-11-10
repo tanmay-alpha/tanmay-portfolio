@@ -73,7 +73,7 @@ export function LastUpdated() {
     <span className="ml-1">
       {" "}· last commit {label}
       {live && (
-        <span style={{ color: "#D97757" }}> (live)</span>
+        <span style={{ color: "var(--rust)" }}> (live)</span>
       )}
     </span>
   );
