@@ -4,7 +4,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { Reveal } from "@/components/ui/reveal";
 
 const NOW_ITEMS: ReadonlyArray<{ label: string; value: string }> = [
-  { label: "Building", value: "trading infrastructure and AI systems" },
+  { label: "Building", value: "MAET, GatePass and applied ML / evaluation tooling" },
   { label: "Reading", value: "market microstructure, ML papers, whatever's interesting" },
   { label: "Eating", value: "best food I can find in Bhopal and Agra" },
   { label: "Based in", value: "VIT Bhopal, Madhya Pradesh" },

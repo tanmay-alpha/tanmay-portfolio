@@ -26,13 +26,17 @@ export const metadata: Metadata = {
     template: "%s — Tanmay Mangal",
   },
   description:
-    "Tanmay Mangal — B.Tech CSE at VIT Bhopal. Building at the intersection of ML, financial systems, and full-stack engineering.",
+    "Tanmay Mangal - software engineer (B.Tech CSE, VIT Bhopal, 2028) building financial systems, full-stack products and applied ML. Available for selected freelance projects.",
   keywords: [
     "Tanmay Mangal",
     "VIT Bhopal",
-    "Quant ML",
+    "Software Engineer",
+    "Freelance Developer",
     "Full-Stack",
+    "Applied ML",
     "MAET",
+    "GatePass",
+    "Crucible",
     "Lumint",
     "FinCalc India",
     "Portfolio",
@@ -46,7 +50,7 @@ export const metadata: Metadata = {
     siteName: "Tanmay Mangal",
     title: "Tanmay Mangal",
     description:
-      "Tanmay Mangal — B.Tech CSE at VIT Bhopal. Building at the intersection of ML, financial systems, and full-stack engineering.",
+      "Tanmay Mangal - software engineer (B.Tech CSE, VIT Bhopal, 2028) building financial systems, full-stack products and applied ML. Available for selected freelance projects.",
     images: [
       {
         url: "/opengraph-image",
@@ -60,7 +64,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Tanmay Mangal",
     description:
-      "Tanmay Mangal — B.Tech CSE at VIT Bhopal. Building at the intersection of ML, financial systems, and full-stack engineering.",
+      "Tanmay Mangal - software engineer (B.Tech CSE, VIT Bhopal, 2028) building financial systems, full-stack products and applied ML. Available for selected freelance projects.",
     images: ["/opengraph-image"],
     creator: "@tanmay_alpha",
   },

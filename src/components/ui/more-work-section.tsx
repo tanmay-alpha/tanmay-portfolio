@@ -13,18 +13,33 @@ type Project = {
 
 const PROJECTS: ReadonlyArray<Project> = [
   {
-    name: "AI Workspace",
+    name: "Automated Code Review Tool",
     oneLiner:
-      "A universal engineering toolkit for AI-assisted development — apply to any project with one command.",
-    stack: ["powershell", "ci/cd", "ai-agents", "mcp", "templates"],
-    github: "https://github.com/tanmay-alpha/-ai-workspace",
+      "Self-hostable PR reviewer: GitHub webhooks, diff parsing, rule-based anti-pattern detection, Next.js dashboard, GitHub Action and VS Code extension. Detection is rule-based by default; the CodeBERT pipeline ships without a trained checkpoint.",
+    stack: ["java 21", "spring boot", "python", "fastapi", "next.js", "postgresql"],
+    github: "https://github.com/tanmay-alpha/automated-code-review-tool",
   },
   {
-    name: "AI Image Forensic Screener",
+    name: "RegimeShift",
     oneLiner:
-      "Desktop deepfake detector — ML + EXIF + C2PA provenance in one pipeline.",
-    stack: ["python", "pytorch", "opencv", "pyqt6", "c2pa"],
-    github: "https://github.com/tanmay-alpha/AI-Image-Forensic-Screener",
+      "Offline research lab testing whether regime models improve risk control after costs. Its own finding: the HMM allocation does not reliably beat equal weight. Reproducible CLI and negative controls included.",
+    stack: ["python", "pandas", "hmm", "streamlit"],
+    github: "https://github.com/tanmay-alpha/RegimeShift",
+  },
+  {
+    name: "Lumint",
+    oneLiner:
+      "Cross-modal fraud detection — document, URL and UPI analysis in one pipeline. Built at the Canara Bank SuRaksha Hackathon 2.0.",
+    stack: ["python", "fastapi", "next.js", "typescript", "ocr", "opencv"],
+    github: "https://github.com/tanmay-alpha/lumint",
+  },
+  {
+    name: "FinCalc India",
+    oneLiner:
+      "Six financial calculators for Indian users — SIP, EMI, FD, PPF, tax regime comparison.",
+    stack: ["next.js", "typescript", "postgresql", "prisma", "nextauth"],
+    github: "https://github.com/tanmay-alpha/fincalc-india",
+    live: { label: "live", href: "https://fincalc-india.vercel.app" },
   },
   {
     name: "FOSSEE Workshop Booking",
@@ -33,6 +48,13 @@ const PROJECTS: ReadonlyArray<Project> = [
     stack: ["react", "vite", "tailwind", "react-router"],
     github: "https://github.com/tanmay-alpha/fossee-workshop-booking",
     live: { label: "live", href: "https://fossee-workshop-platform.vercel.app" },
+  },
+  {
+    name: "AI Image Forensic Screener",
+    oneLiner:
+      "Desktop deepfake detector — ML + EXIF + C2PA provenance in one pipeline.",
+    stack: ["python", "pytorch", "opencv", "pyqt6", "c2pa"],
+    github: "https://github.com/tanmay-alpha/AI-Image-Forensic-Screener",
   },
 ];
 
@@ -79,7 +101,7 @@ export function MoreWorkSection() {
               transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
               className="section-heading"
             >
-              More things I&apos;ve shipped.
+              More projects.
             </motion.h2>
           </div>
         </div>

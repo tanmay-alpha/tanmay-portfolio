@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const NAV_ITEMS = [
   { id: "top", label: "Home" },
-  { id: "now", label: "Now" },
   { id: "work", label: "Work" },
+  { id: "services", label: "Services" },
   { id: "experience", label: "Experience" },
+  { id: "about", label: "About" },
   { id: "contact", label: "Contact" },
 ] as const;
 
@@ -15,6 +16,8 @@ export function TopNav() {
   const [scrolled, setScrolled] = useState(false);
   const [activeId, setActiveId] = useState<string>("top");
   const [mobileOpen, setMobileOpen] = useState(false);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const openRef = useRef<HTMLButtonElement>(null);
 
   // Scroll state — apply .nav-scrolled after 80px of scroll.
   useEffect(() => {
@@ -55,6 +58,21 @@ export function TopNav() {
     sections.forEach((s) => observer.observe(s));
     return () => observer.disconnect();
   }, []);
+
+  // Escape closes the menu; focus moves into the dialog and returns on close.
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const opener = openRef.current;
+    closeRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMobileOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      opener?.focus();
+    };
+  }, [mobileOpen]);
 
   // Lock body scroll when mobile menu is open.
   useEffect(() => {
@@ -99,6 +117,7 @@ export function TopNav() {
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <button
+            ref={openRef}
             type="button"
             aria-label={mobileOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileOpen}
@@ -153,6 +172,7 @@ export function TopNav() {
             <div className="flex items-center gap-2">
               <ThemeToggle />
               <button
+                ref={closeRef}
                 type="button"
                 aria-label="Close menu"
                 onClick={() => setMobileOpen(false)}

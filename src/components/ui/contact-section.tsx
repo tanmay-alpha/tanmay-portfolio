@@ -199,17 +199,17 @@ export function ContactSection() {
               transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
               className="section-heading mt-3"
             >
-              Get in touch
+              Have a project in mind?
             </motion.h2>
             <p className="mt-6 max-w-md text-[15px] leading-[1.75] text-text-2">
-              Reach me at{" "}
+              Tell me what you&apos;re building and what you need. Email{" "}
               <a
                 href={`mailto:${CONTACT_EMAIL}`}
                 className="text-text-1 underline decoration-border-strong underline-offset-4 transition-colors duration-200 hover:decoration-accent"
               >
                 {CONTACT_EMAIL}
               </a>{" "}
-              — or use the form below. I reply within 24 hours.
+              or use the form. I usually reply within a couple of days.
             </p>
             <a
               href="https://www.linkedin.com/in/tanmaymangal"
@@ -319,8 +319,8 @@ export function ContactSection() {
                 )}
               </div>
               <p className="text-[12px] text-text-3">
-                I get an email at mangaltanmay7@gmail.com when you send. I
-                usually reply within 24 hours.
+                Sent straight to my inbox. I usually reply within a couple of
+                days.
               </p>
             </form>
           </div>

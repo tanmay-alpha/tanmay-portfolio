@@ -29,13 +29,12 @@ const EXPERIENCE: ReadonlyArray<Experience> = [
     ],
   },
   {
-    company: "Shipd by Datacurve (YC W24)",
-    role: "AI Training Data Contributor",
+    company: "Shipd by Datacurve",
+    role: "Independent contributor — coding challenge design",
     dates: "May 2026 — Present",
     bullets: [
-      "Designed 10+ coding challenges for LLM training",
-      "Built a 'challenge-authoring' workflow inside ai-workspace — used it to ship the Shipd challenges faster",
-      "Shipd has paid out $2M+ to contributors",
+      "Designed 10+ coding challenges used to evaluate and train LLMs (details confidential)",
+      "Built a challenge-authoring workflow in my own ai-workspace repo to draft and check challenges faster",
     ],
   },
   {
@@ -69,7 +68,7 @@ export function ExperienceSection() {
       <div className="mx-auto max-w-[1100px] px-6 lg:px-8">
         <div className="grid-12 mb-12 gap-y-8 md:mb-16">
           <div className="col-span-12 md:col-span-2 flex flex-col gap-3">
-            <span className="eyebrow">Where I&apos;ve worked</span>
+            <span className="eyebrow">Professional experience</span>
           </div>
           <div className="col-span-12 md:col-span-10">
             <motion.h2
@@ -79,7 +78,7 @@ export function ExperienceSection() {
               transition={reduced ? { duration: 0 } : { duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
               className="section-heading"
             >
-              Experience
+              Where I&apos;ve worked.
             </motion.h2>
           </div>
         </div>
@@ -132,12 +131,20 @@ export function ExperienceSection() {
               viewport={{ once: true, amount: 0.2, margin: "0px 0px -40px 0px" }}
               transition={reduced ? { duration: 0 } : { duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             >
-              <p className="eyebrow">Working toward</p>
+              <p className="eyebrow">Independent technical contributions</p>
               <p className="mt-3 max-w-2xl text-[14px] leading-[1.7] text-text-1">
-                An AI/ML or full-stack role at a company where the engineering
-                moves money or moves people. I&apos;m strongest when the work
-                has real consequences — backtests that risk real P&amp;L, fraud
-                systems that block real attacks, products real users depend on.
+                Alongside internships, I take on paid AI-evaluation and
+                data-quality assignments as an independent contributor through
+                Shipd, Outlier, Turing, Meera and DataAnnotation. These are
+                contractor-style tasks, not employment with those platforms,
+                and the client work is confidential, so I don&apos;t describe
+                specifics.
+              </p>
+              <p className="mt-6 eyebrow">Working toward</p>
+              <p className="mt-3 max-w-2xl text-[14px] leading-[1.7] text-text-1">
+                Internships and roles in AI/ML or full-stack engineering where
+                correctness matters — financial systems, evaluation tooling,
+                products people depend on.
               </p>
             </motion.div>
 

@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "Tanmay Mangal — AI/ML Engineer";
+export const alt = "Tanmay Mangal — Software engineer";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -65,7 +65,7 @@ export default function OpenGraph() {
                 fontFamily: "monospace",
               }}
             >
-              Open to work
+              Open to projects
             </span>
           </span>
         </div>
@@ -88,7 +88,7 @@ export default function OpenGraph() {
               fontFamily: "monospace",
             }}
           >
-            AI/ML · Full-stack · Quant-adjacent
+            Financial systems · Full-stack · Applied ML
           </span>
           <span
             style={{
@@ -113,7 +113,7 @@ export default function OpenGraph() {
             }}
           >
             <span style={{ color: "#D97757", marginRight: 12 }}>—</span>
-            Build to understand. Trade to learn. Ship to compound.
+            Software engineer, VIT Bhopal. Available for selected freelance projects.
           </span>
         </div>
 
