@@ -26,7 +26,8 @@ Toggle with the sun/moon button in the nav.
 ```
 src/
 ├── app/
-│   ├── api/               # contact, CSP report, GitHub, LeetCode routes
+│   ├── api/               # contact, CSP report, GitHub commits routes
+│   ├── work/[slug]/       # Case-study pages (MAET, GatePass)
 │   ├── globals.css        # Tailwind base + theme tokens
 │   ├── layout.tsx         # Fonts, metadata, CSP-compatible scripts
 │   └── page.tsx           # Home page composition

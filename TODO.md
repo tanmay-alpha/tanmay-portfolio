@@ -32,7 +32,7 @@ Status: [ ] open · [~] in progress · [x] done
 - [x] P1 Case studies /work/maet, /work/gatepass (Crucible case study: not written, open)
 - [x] P1 Experience audit vs public/resume.pdf — Main. Aligned TradeVed (title "Quantitative Research Intern"), Dynamic Bubble, Shipd to resume wording; removed "live in production", ai-workspace workflow claim, Techfest/ECell numeric claims (not in resume). Education section lines removal assigned to PerfA11y.
 - [x] tests (22) + lint + build pass locally; deployment verification: see report
-- [ ] P2 README/CLAUDE.md refresh
+- [x] README layout refreshed (CLAUDE.md untouched)
 
 ## P2 (carried)
 - [ ] Case-study pages / screenshots → Round 2 above
@@ -46,3 +46,11 @@ Status: [ ] open · [~] in progress · [x] done
 ## Findings
 - Resume lists MAET "600+ tests"; site no longer shows test counts (unverified in repo).
 - Sandbox Resend sender only delivers to the Resend account owner; verify a domain for real client mail.
+
+## Round 3 (final review vs original brief)
+- [x] npm audit --omit=dev: 6 vulns (1 critical next, 5 high) -> 0 after non-breaking `npm audit fix` (next 15.5.29). 7 moderate/high remain in dev-only eslint tooling.
+- [x] External/internal links checked: all 200 (leetcode 403 / linkedin www 999 are bot blocks). OG image, resume.pdf, robots, 404 OK.
+- [x] Vercel project inspected: Next.js preset, Node 24.x, default build, no custom domains on account (only *.vercel.app), auto-deploy from main works.
+- [ ] BLOCKED (owner): Vercel env vars for contact form (still none) -> E2E email test.
+- [ ] Not done by choice: Lovable (not needed), Crucible case study, RegimeShift/Code-Review case studies, Plausible analytics not configured.
+- [ ] public/Tanmay_CV.pdf is byte-identical to resume.pdf (duplicate; kept in case of external links).
