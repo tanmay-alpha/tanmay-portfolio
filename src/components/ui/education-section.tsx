@@ -16,11 +16,11 @@ const COURSEWORK = [
 const ACTIVITIES = [
   {
     role: "ECell VIT Bhopal — Operations",
-    detail: "(Nov 2024 – Dec 2025), ran ops for 2 flagship events.",
+    detail: "(Nov 2024 – Dec 2025)",
   },
   {
     role: "Techfest IIT Bombay Campus Ambassador",
-    detail: "— top 4,000 of 50,000+ nationwide (May 2025 – Dec 2025).",
+    detail: "(May 2025 – Dec 2025)",
   },
 ];
 
@@ -46,8 +46,8 @@ export function EducationSection() {
             <div
               className="rounded-lg p-8 mx-auto"
               style={{
-                background: "#0F0F0F",
-                border: "1px solid rgba(255,255,255,0.06)",
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
                 maxWidth: "720px",
               }}
             >
@@ -58,7 +58,7 @@ export function EducationSection() {
                 Education
               </p>
 
-              <h3
+              <h2
                 className="mt-3"
                 style={{
                   fontFamily: "var(--font-fraunces), ui-serif, Georgia, serif",
@@ -69,7 +69,7 @@ export function EducationSection() {
                 }}
               >
                 VIT Bhopal
-              </h3>
+              </h2>
 
               <p className="mt-2 text-[14px] text-text-2">
                 B.Tech Computer Science &amp; Engineering · 2024 – 2028

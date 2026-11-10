@@ -12,47 +12,28 @@ type Experience = {
 const EXPERIENCE: ReadonlyArray<Experience> = [
   {
     company: "TradeVed Fintech Labs",
-    role: "Quant ML Intern",
+    role: "Quantitative Research Intern (remote)",
     dates: "Jun 2026 — Jul 2026",
     bullets: [
-      "Backtested systematic NSE strategies in Python with Pandas; iterated on filters and risk logic",
-      "Built data validation + filter pipeline for TradeVed's stock screener (live in production)",
+      "Worked on the stock screener's filter logic, data validation and UI workflows",
+      "Backtested systematic strategies on historical NSE data in Python and Pandas",
     ],
   },
   {
     company: "Dynamic Bubble",
-    role: "Web Developer Intern",
+    role: "Web Developer Intern (remote)",
     dates: "May 2026 — Present",
     bullets: [
-      "Built and shipped dynamicbubble.agency from scratch — service pages, questionnaire flows, consultation forms",
-      "React, Node.js, MongoDB, deployed on Vercel",
+      "Built and deployed the company's website (dynamicbubble.agency) from scratch with React, Node.js and MongoDB",
+      "Keep shipping features, UI improvements and performance work on the live site",
     ],
   },
   {
     company: "Shipd by Datacurve",
-    role: "Independent contributor — coding challenge design",
+    role: "AI training data contributor",
     dates: "May 2026 — Present",
     bullets: [
-      "Designed 10+ coding challenges used to evaluate and train LLMs (details confidential)",
-      "Built a challenge-authoring workflow in my own ai-workspace repo to draft and check challenges faster",
-    ],
-  },
-  {
-    company: "Techfest IIT Bombay",
-    role: "Campus Ambassador",
-    dates: "May 2025 — Dec 2025",
-    bullets: [
-      "Top 4,000 of 50,000+ ambassadors nationwide",
-      "Increased event registrations by 40% across 3 departments at VIT Bhopal",
-    ],
-  },
-  {
-    company: "ECell VIT Bhopal",
-    role: "Operations",
-    dates: "Nov 2024 — Dec 2025",
-    bullets: [
-      "Coordinated logistics for large-scale entrepreneurship events",
-      "First-year hire, ran ops for 2 flagship events",
+      "Designed 10+ coding challenges for Shipd's AI training pipeline (details confidential)",
     ],
   },
 ];
