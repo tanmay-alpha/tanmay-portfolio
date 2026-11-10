@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 
 type Project = {
@@ -12,6 +13,7 @@ type Project = {
   stack: ReadonlyArray<string>;
   github: string;
   live?: string;
+  caseStudy?: string;
   liveNote?: string;
 };
 
@@ -31,6 +33,7 @@ const PROJECTS: ReadonlyArray<Project> = [
     stack: ["typescript", "react 19", "postgresql", "drizzle", "bigquery", "sse"],
     github: "https://github.com/tanmay-alpha/MAET",
     live: "https://maet-pi.vercel.app",
+    caseStudy: "/work/maet",
   },
   {
     name: "GatePass",
@@ -46,6 +49,7 @@ const PROJECTS: ReadonlyArray<Project> = [
     stack: ["typescript", "node", "sql", "zxing (wasm)", "docker"],
     github: "https://github.com/tanmay-alpha/GatePass",
     live: "https://gatepass-sandy.vercel.app",
+    caseStudy: "/work/gatepass",
   },
   {
     name: "Crucible",
@@ -117,6 +121,14 @@ export function WorkSection() {
                     {project.subtitle}
                   </p>
                   <div className="mt-4 flex flex-col items-start gap-2">
+                    {project.caseStudy && (
+                      <Link
+                        href={project.caseStudy}
+                        className="project-github underline decoration-border-strong underline-offset-4"
+                      >
+                        Case study →
+                      </Link>
+                    )}
                     {project.live && (
                       <a
                         href={project.live}
@@ -143,14 +155,14 @@ export function WorkSection() {
                   <Row term="What I built" text={project.built} />
                   <Row term="Key decision" text={project.decision} />
                   <Row term="Evidence" text={project.evidence} />
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    {project.stack.map((tag) => (
-                      <span key={tag} className="tech-badge">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
                 </dl>
+                <div className="flex flex-wrap gap-1.5 pt-1 md:col-span-9 md:col-start-4">
+                  {project.stack.map((tag) => (
+                    <span key={tag} className="tech-badge">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
               </div>
             </motion.article>
           ))}
