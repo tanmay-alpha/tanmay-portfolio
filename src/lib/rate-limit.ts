@@ -3,10 +3,9 @@ import { isIP } from "node:net";
 /**
  * Tiny in-memory rate limiter, shared across routes.
  *
- * For a single-server Vercel deployment the in-memory Map is fine — it
- * resets on cold start. A multi-region deploy would swap this for an
- * Upstash Redis client. The interface is identical so callers don't
- * change.
+ * Limits are per process and reset on cold start. Serverless deployments
+ * may run multiple instances even in one region, so this is a best-effort
+ * abuse guard rather than a globally enforced quota.
  */
 
 type Bucket = { count: number; resetAt: number };
@@ -17,7 +16,7 @@ const MAX_BUCKETS = 2048;
 
 function pruneExpiredBuckets(buckets: Map<string, Bucket>, now: number): void {
   for (const [key, bucket] of buckets) {
-    if (bucket.resetAt < now) buckets.delete(key);
+    if (bucket.resetAt <= now) buckets.delete(key);
   }
 }
 
@@ -46,7 +45,7 @@ export function createRateLimiter(opts: {
     }
 
     const existing = buckets.get(key);
-    if (!existing || existing.resetAt < now) {
+    if (!existing || existing.resetAt <= now) {
       buckets.set(key, { count: 1, resetAt: now + opts.windowMs });
       return { ok: true };
     }

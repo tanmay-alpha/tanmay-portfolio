@@ -34,29 +34,27 @@ const ContactSchema = z.object({
   turnstileToken: z.string().max(2048).optional(),
 });
 
-// In-memory rate limit. Resets on cold start. For a single-server Vercel
-// deployment this is fine; a multi-region deploy would need Upstash.
+// Best-effort, per-instance rate limit; resets on cold start and is not
+// shared across concurrently running serverless instances.
 const contactLimiter = createRateLimiter({
   max: 3,
   windowMs: 10 * 60 * 1000,
 });
 
 /**
- * CSRF defense — only same-origin POSTs are accepted. Vercel sets the
- * `host` header from the request URL and `origin` from the browser, so
- * comparing the two is a reliable same-origin check. Bots and curl can't
- * fake Origin easily (browsers always send it for non-GET requests).
+ * CSRF defense — compare the full origin, including scheme and port.
+ * This blocks cross-origin browser submissions, not non-browser bots
+ * that can forge Origin; the honeypot, rate limit and captcha complement it.
  */
 function isSameOrigin(req: NextRequest): boolean {
   const origin = req.headers.get("origin");
   const referer = req.headers.get("referer");
-  const host = req.headers.get("host");
-  if (!host) return false;
+  const expectedOrigin = req.nextUrl.origin;
   // Origin is the strongest signal when present.
   if (origin) {
     try {
       const u = new URL(origin);
-      return u.host === host;
+      return u.origin === expectedOrigin;
     } catch {
       return false;
     }
@@ -65,7 +63,7 @@ function isSameOrigin(req: NextRequest): boolean {
   if (referer) {
     try {
       const u = new URL(referer);
-      return u.host === host;
+      return u.origin === expectedOrigin;
     } catch {
       return false;
     }
@@ -128,9 +126,9 @@ export async function POST(req: NextRequest) {
   //    so a bot doesn't get a 400 that gives away the trap.
   const websiteValue =
     typeof body === "object" && body !== null && "website" in body
-      ? String((body as { website?: unknown }).website ?? "")
-      : "";
-  if (websiteValue.length > 0) {
+      ? body.website
+      : undefined;
+  if (typeof websiteValue === "string" && websiteValue.length > 0) {
     return NextResponse.json({ ok: true });
   }
 
@@ -208,7 +206,9 @@ export async function POST(req: NextRequest) {
   try {
     const { name, email, message } = parsed.data;
     const { data, error } = await resend.emails.send({
-      from: "Portfolio Contact <onboarding@resend.dev>",
+      from:
+        process.env.CONTACT_FROM_EMAIL ||
+        "Portfolio Contact <onboarding@resend.dev>",
       to: [toEmail],
       replyTo: email,
       subject: `[portfolio] ${name} — ${email}`,
@@ -222,13 +222,11 @@ export async function POST(req: NextRequest) {
     });
 
     if (error) {
-      // Log the upstream error WITHOUT echoing the user's submitted
-      // message. Resend error objects are usually just code + message;
-      // even so, log name + message only, never the request body.
+      // Upstream messages can echo addresses or submitted fields.
+      // Log only the error type, never user content.
       console.error(
         "[/api/contact] resend error:",
         error.name ?? "unknown",
-        error.message ?? "(no message)",
       );
       return NextResponse.json(
         { ok: false, error: "Email send failed" },
@@ -242,11 +240,10 @@ export async function POST(req: NextRequest) {
     // submitted `name`, `email`, and `message` must never appear in
     // function logs — Vercel persists them and a log viewer could be
     // a low-trust environment.
-    const e = err as { name?: string; message?: string; statusCode?: number };
+    const e = err as { name?: string; statusCode?: number };
     console.error(
       "[/api/contact] send error:",
       e?.name ?? "unknown",
-      e?.message ?? "(no message)",
       "status:",
       e?.statusCode ?? "n/a",
     );

@@ -20,6 +20,7 @@ In your Vercel project → **Settings → Environment Variables**, add:
 | --- | --- |
 | `RESEND_API_KEY` | `re_…` (the API key from step 1) |
 | `CONTACT_TO_EMAIL` | `mangaltanmay7@gmail.com` (where submissions go) |
+| `CONTACT_FROM_EMAIL` | optional sender, e.g. `Portfolio <contact@yourdomain.com>`; the domain must be verified in Resend. Defaults to the `onboarding@resend.dev` sandbox sender, which Resend only lets deliver to the account owner's own email. |
 
 Hit **Save**, then redeploy (or push to `main`).
 

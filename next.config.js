@@ -75,10 +75,8 @@ const SECURITY_HEADERS = [
       //
       // style-src 'unsafe-inline' — REQUIRED for Tailwind utility
       // classes that emit dynamic inline `style=` attributes (Framer
-      // Motion's transform/translateY props, the data-reveal reveal
-      // animations, the aurora orb's WebGL position). Without
-      // 'unsafe-inline' here, ~50 console errors fire on every
-      // page load and the reveal animations stop working.
+      // Motion's transform/translateY props and reveal animations).
+      // Without 'unsafe-inline', those animations stop working.
       //
       // What we DO lock down:
       //   - no remote script sources by default (Plausible and
@@ -120,8 +118,7 @@ const SECURITY_HEADERS = [
         `style-src ${styleSrc}`,
         `connect-src ${connectSrc}`,
         `frame-src ${frameSrc}`,
-        // WebGL shader compilation in the aurora orb
-        "worker-src 'self' blob:",
+        "worker-src 'self'",
         "object-src 'none'",
         "frame-ancestors 'none'",
         "base-uri 'self'",
